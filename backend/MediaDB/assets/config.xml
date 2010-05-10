@@ -1,0 +1,58 @@
+<mediadb>
+	<!-- Threads
+	     Number of concurrent threads during full indexing.
+	     NOTE! Keep this sane. A too large number can easily fill the
+	     memory to its brim.
+	-->
+	<threads>10</threads>
+
+	<!-- Paths
+	     Root paths that should be scanned for files.
+	-->
+	<paths>
+		<path>/home/pontus/Bilder/2006</path>
+		<path>/home/pontus/Bilder/Foton</path>
+	</paths>
+
+	<!-- Database settings 
+	     host:     The database host name
+	     database: The name of the database storing the tables
+	     username: Database username
+	     password: Database user password
+	-->
+	<database>
+		<host>localhost</host>
+		<database>mediadb</database>
+		<username>root</username>
+		<password>*****</password>
+	</database>
+
+	<!-- Mediatypes
+	     A media type is a mapping of an extension to a mimetype.
+	     This will determine what handler will be used when the file is
+	     processed.
+	-->
+	<mediatypes>
+		<mediatype extension="jpg"  mimetype="image/jpeg" />
+		<mediatype extension="jpeg" mimetype="image/jpeg" />
+		<mediatype extension="tif"  mimetype="image/tiff" />
+		<mediatype extension="tiff" mimetype="image/tiff" />
+		<mediatype extension="png"  mimetype="image/png" />
+		<mediatype extension="gif"  mimetype="image/gif" />
+		<mediatype extension="svg"  mimetype="image/svg+xml" />
+		<mediatype extension="pdf"  mimetype="application/pdf" />
+		<mediatype extension="eps"  mimetype="image/x-eps" />
+	</mediatypes>
+
+	<!-- Previews 
+	     During indexing preview images will be generated for every file that
+	     can be processed. The width and height attributes is the maximum 
+	     width and height and the previews will be scaled accordingly, with
+	     constrained proportions. The name attribute is arbitrary and will be
+	     put in the record in the preview database table
+	-->
+	<previews>
+		<preview width="480" height="320" name="medium" />
+		<preview width="240" height="180" name="small" />
+	</previews>
+</mediadb>
