@@ -31,3 +31,4 @@ roxenlauncher
 stamp-*
 !src/soppa.c
 backend/MediaDB/bin
+backend/MediaDB/obj

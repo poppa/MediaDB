@@ -9,14 +9,22 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
+		DebugLinux|x86 = DebugLinux|x86
+		ReleaseLinux|x86 = ReleaseLinux|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.DebugLinux|x86.ActiveCfg = DebugLinux|x86
 		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.Release|x86.ActiveCfg = Release|Any CPU
+		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.ReleaseLinux|x86.ActiveCfg = ReleaseLinux|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.Debug|x86.ActiveCfg = Debug|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.Debug|x86.Build.0 = Debug|x86
+		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.DebugLinux|x86.ActiveCfg = DebugLinux|x86
+		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.DebugLinux|x86.Build.0 = DebugLinux|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.Release|x86.ActiveCfg = Release|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.Release|x86.Build.0 = Release|x86
+		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.ReleaseLinux|x86.ActiveCfg = ReleaseLinux|x86
+		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.ReleaseLinux|x86.Build.0 = ReleaseLinux|x86
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = MediaDB\MediaDB.csproj
@@ -37,5 +45,10 @@ Global
 		$3.scope = text/plain
 		$0.VersionControlPolicy = $4
 		$4.inheritsSet = Mono
+		$0.ChangeLogPolicy = $5
+		$5.UpdateMode = Nearest
+		$5.MessageStyle = $6
+		$6.LineAlign = 0
+		$5.inheritsSet = Mono
 	EndGlobalSection
 EndGlobal

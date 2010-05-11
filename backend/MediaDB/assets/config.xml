@@ -8,13 +8,14 @@
 
 	<!-- Paths
 	     Root paths that should be scanned for files.
+	     NOTE! Use backslashes on Windows
 	-->
 	<paths>
-		<path>/home/pontus/Bilder/2006</path>
-		<path>/home/pontus/Bilder/Foton</path>
+	  <path>/some/path</path>
+		<path>/some/other/path</path>
 	</paths>
 
-	<!-- Database settings 
+	<!-- Database settings
 	     host:     The database host name
 	     database: The name of the database storing the tables
 	     username: Database username
@@ -24,7 +25,7 @@
 		<host>localhost</host>
 		<database>mediadb</database>
 		<username>root</username>
-		<password>*****</password>
+		<password>secret-password</password>
 	</database>
 
 	<!-- Mediatypes
@@ -33,15 +34,13 @@
 	     processed.
 	-->
 	<mediatypes>
-		<mediatype extension="jpg"  mimetype="image/jpeg" />
-		<mediatype extension="jpeg" mimetype="image/jpeg" />
-		<mediatype extension="tif"  mimetype="image/tiff" />
-		<mediatype extension="tiff" mimetype="image/tiff" />
-		<mediatype extension="png"  mimetype="image/png" />
-		<mediatype extension="gif"  mimetype="image/gif" />
-		<mediatype extension="svg"  mimetype="image/svg+xml" />
-		<mediatype extension="pdf"  mimetype="application/pdf" />
-		<mediatype extension="eps"  mimetype="image/x-eps" />
+		<mediatype extension=".jpg,.jpeg"  mimetype="image/jpeg" />
+		<mediatype extension=".tif,.tiff"  mimetype="image/tiff" />
+		<mediatype extension=".png"  mimetype="image/png" />
+		<mediatype extension=".gif"  mimetype="image/gif" />
+		<mediatype extension=".svg"  mimetype="image/svg+xml" />
+		<mediatype extension=".pdf"  mimetype="application/pdf" />
+		<mediatype extension=".eps"  mimetype="image/x-eps" />
 	</mediatypes>
 
 	<!-- Previews 

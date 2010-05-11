@@ -39,6 +39,9 @@ namespace MediaDB
 	/// </summary>
 	public class Indexer
 	{
+    public static int TOTAL_FILES = 0;
+    public static int FILES_DONE = 0;
+
 		/// <summary>
 		/// The root path
 		/// </summary>
@@ -71,7 +74,16 @@ namespace MediaDB
 			if (Settings.Threads > 0)
 				slots = Settings.Threads;
 
-			Log.Debug("Using {0} threads\n", slots);
+      Files = new ArrayList();
+
+      Log.File("\n+++ Starting crawler in {0} +++\n", Path);
+
+      crawl(Path);
+
+      Log.File("--- Found {0} files in {1} ---\n",
+               Files.Count, Path);
+
+      TOTAL_FILES += Files.Count;
 		}
 
 		/// <summary>
@@ -79,7 +91,13 @@ namespace MediaDB
 		/// </summary>
 		public void FreeSlot()
 		{
-			taken--;
+      lock (this) {
+        FILES_DONE++;
+        Log.Debug("\n    +++++ {0} of {1} ({2}%) done!\n\n", 
+                  FILES_DONE, TOTAL_FILES,
+                  Math.Round(((double)FILES_DONE/(double)TOTAL_FILES)*100));
+        taken--;
+      };
 		}
 
 		/// <summary>
@@ -92,13 +110,7 @@ namespace MediaDB
 				return;
 			}
 
-			Files = new ArrayList();
-
-			Log.File("\n+++ Starting crawler pass (1) in {0} +++\n", Path);
-			crawl(Path);
-
-			Log.File("--- Found {0} files in {1} ---\n", Files.Count, Path);
-			Log.File("\n+++ Starting crawler pass (2) in {0} +++\n", Path);
+      Log.File("\n+++ Starting indexer in {0} +++\n", Path);
 
 			foreach (CrawlerFile cf in Files) {
 				while (taken >= slots)
@@ -138,6 +150,7 @@ namespace MediaDB
 			{
 				case "image/jpeg":
 				case "image/tiff":
+        case "image/gif":
 				case "image/png":
 					h = new IMGHandler(cf.File, cf.MediaType);
 					((IMGHandler)h).Process();

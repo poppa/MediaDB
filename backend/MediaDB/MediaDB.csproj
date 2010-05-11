@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -29,8 +29,25 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugLinux|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\x86\DebugLinux</OutputPath>
+    <DefineConstants>LINUX DEBUG</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseLinux|x86' ">
+    <DebugType>none</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\x86\ReleaseLinux</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
@@ -39,19 +56,23 @@
       <HintPath>assets\MySql.Data.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="itextsharp, Version=5.0.2.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>assets\itextsharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Backend\Indexer.cs" />
+    <Compile Include="Tools\Database.cs" />
+    <Compile Include="Tools\External\EXIFextractor.cs" />
+    <Compile Include="Tools\External\translation.cs" />
+    <Compile Include="Tools\Graphics.cs" />
     <Compile Include="Tools\Tools.cs" />
     <Compile Include="Backend\FileHandler.cs" />
     <Compile Include="Backend\MediaFile.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <Folder Include="Backend\" />
-    <Folder Include="Tools\" />
-  </ItemGroup>
 </Project>

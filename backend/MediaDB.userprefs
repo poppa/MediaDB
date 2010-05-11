@@ -1,10 +1,10 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" ctype="Workspace" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="MediaDB/Backend/Indexer.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugLinux|x86" ctype="Workspace" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="MediaDB/Main.cs" ctype="Workbench">
     <Files>
-      <File FileName="MediaDB/Main.cs" Line="1" Column="1" />
+      <File FileName="MediaDB/Main.cs" Line="19" Column="25" />
       <File FileName="MediaDB/Settings.cs" Line="1" Column="1" />
-      <File FileName="MediaDB/Backend/Indexer.cs" Line="21" Column="1" />
+      <File FileName="MediaDB/Backend/Indexer.cs" Line="1" Column="1" />
       <File FileName="MediaDB/Tools/Tools.cs" Line="1" Column="1" />
       <File FileName="MediaDB/Backend/FileHandler.cs" Line="1" Column="1" />
       <File FileName="MediaDB/Backend/MediaFile.cs" Line="1" Column="1" />
@@ -14,10 +14,11 @@
         <State expanded="True">
           <Node name="MediaDB" expanded="True">
             <Node name="References" expanded="True" />
-            <Node name="Backend" expanded="True">
-              <Node name="Indexer.cs" selected="True" />
+            <Node name="Backend" expanded="True" />
+            <Node name="Tools" expanded="True">
+              <Node name="External" expanded="True" />
             </Node>
-            <Node name="Tools" expanded="True" />
+            <Node name="Main.cs" selected="True" />
           </Node>
         </State>
       </Pad>

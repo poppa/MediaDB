@@ -17,5 +17,9 @@
         </Package>
       </Packages>
     </Packages>
+    <Configuration Condition=" '$(Configuration)' == '' ">DebugLinux|x86</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugLinux|x86|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseLinux|x86|AnyCPU' " />
 </Project>

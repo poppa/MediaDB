@@ -18,13 +18,13 @@
  * Author:
  * 	Pontus Östlund <pontus@poppa.se>
  */
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using System.Data;
+using System.Threading;
 using MySql.Data.MySqlClient;
 
 namespace MediaDB
@@ -43,6 +43,8 @@ namespace MediaDB
 		/// Database connection info, host, db, user, password
 		/// </summary>
 		public static DBInfo DatabaseInfo { get; private set; }
+
+    private static string dbstr = null;
 
 		/// <summary>
 		/// Array of paths to index/scan
@@ -82,15 +84,21 @@ namespace MediaDB
 		public static string TmpDir {
 			get {
 				if (_tmpdir == null) {
+#if LINUX
+					_tmpdir = "/tmp";
+#else
 					_tmpdir = Path.GetTempPath();
+#endif
 					if (_tmpdir == null) {
 						Log.Werror("Unable to locate tmp directory!\n");
 						return null;
 					}
 
-					_tmpdir = Path.Combine(_tmpdir, "media_db");
+					_tmpdir = Path.Combine(_tmpdir, "mediadb");
 
-					if (!Tools.FileExists(_tmpdir)) {
+					Log.Debug("TMPDIR: {0}\n", _tmpdir);
+
+					if (!Tools.DirectoryExists(_tmpdir)) {
 						try {
 							Directory.CreateDirectory(_tmpdir);
 						}
@@ -112,6 +120,7 @@ namespace MediaDB
 		/// </summary>
 		public static MySqlConnection DbCon { get { return dbcon; }}
 
+    public static readonly Mutex mutex = new Mutex();
 
 		/// <summary>
 		/// Read the config file and populate this class
@@ -124,6 +133,11 @@ namespace MediaDB
 		/// </returns>
 		public static bool Init(string file)
 		{
+			if (!Tools.DirectoryExists(TmpDir)) {
+				Log.Warning("Tmpdir doesn't exist");
+				return false;
+			}
+
 			FileInfo fi = new FileInfo(file);
 			if (!fi.Exists) {
 				Console.Error.Write("{0} doesn't exist!\n", file);
@@ -162,7 +176,7 @@ namespace MediaDB
 							string v = c.FirstChild.Value;
 							switch (c.Name) {
 								case "host": DatabaseInfo.Host = v; break;
-								case "name": DatabaseInfo.Name = v; break;
+								case "database": DatabaseInfo.Name = v; break;
 								case "username": DatabaseInfo.Username = v; break;
 								case "password": DatabaseInfo.Password = v; break;
 							}
@@ -194,6 +208,8 @@ namespace MediaDB
 
 								if (PreviewMinHeight == 0 || pv.Height < PreviewMinHeight)
 									PreviewMinHeight = pv.Height;
+
+                Previews.Add(pv);
 							}
 						}
 						break;
@@ -207,19 +223,20 @@ namespace MediaDB
 				}
 			}
 
-			string dbstr = String.Format("server={0};  " +
-			                             "Database={1};" +
-																	 "User ID={2}; " +
-			                             "Password={3};" +
-			                             "Pooling=false",
-			                             DatabaseInfo.Host,
-			                             DatabaseInfo.Name,
-			                             DatabaseInfo.Username,
-			                             DatabaseInfo.Password);
+			dbstr = String.Format("server={0}; "  +
+			                      "database={1};" +
+                            "userid={2};"   +
+			                      "password={3};",
+			                      DatabaseInfo.Host,
+			                      DatabaseInfo.Name,
+			                      DatabaseInfo.Username,
+			                      DatabaseInfo.Password);
 			try {
+        Log.Debug("Con str: {0}\n", dbstr);
 				dbcon = new MySqlConnection(dbstr);
+        Log.Debug("Database db: {0}\n", DatabaseInfo.Name);
 				dbcon.Open();
-				dbcon.Close();
+        //dbcon.Close();
 			}
 			catch (Exception e) {
 				Log.Werror("Unable to connect to database: {0}\n", e.Message);
@@ -238,17 +255,139 @@ namespace MediaDB
 		/// <returns>
 		/// A <see cref="MediaType"/>
 		/// </returns>
-		public static MediaType GetMediaType(FileInfo file)
-		{
-			string ext = file.Extension.ToLower();
-			if (ext.Length > 0) ext = ext.Substring(1);
+    public static MediaType GetMediaType(FileInfo file)
+    {
+      foreach (MediaType mt in MediaTypes)
+        if (mt.HasExtension(file.Extension))
+          return mt;
 
-			foreach (MediaType mt in MediaTypes)
-				if (mt.Extension == ext)
-					return mt;
+      return null;
+    }
 
-			return null;
-		}
+    /// <summary>
+    /// Get media file for <paramref name="fullname"/>. 
+    /// If it exists in the database the media file object will be
+    /// populated. Otherwise an empty <see cref="MediaFile"/> object will 
+    /// be returned.
+    /// </summary>
+    /// <param name="fullname"></param>
+    /// <returns></returns>
+    public static MediaFile GetMediaFile(string fullname)
+    {
+      // This method is called from an async method in Indexer.cs.
+      // So lock during the DB call and release when db done.
+      mutex.WaitOne();
+
+      MediaFile mf = null;
+			MySqlDataReader r = null;
+      try {
+        string sql = "SELECT * FROM `file` WHERE fullname = @fn";
+        if (Query(out r, sql, DB.Param("fn", fullname))) {
+          if (r.HasRows) {
+						r.Read();
+            mf = new MediaFile();
+						mf.SetFromSql(r);
+            Log.Debug("   @@@ Found file {0} in database!\n", fullname);
+          }
+
+          DB.EndReader(ref r);
+        }
+      }
+      catch (Exception e) {
+        Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+				DB.EndReader(ref r);
+      }
+
+      // Release the thread
+      mutex.ReleaseMutex();
+
+      return mf;
+    }
+
+		/// <summary>
+		/// Query database with insert statement.
+		/// </summary>
+		/// <param name="id">
+		/// A <see cref="System.Int64"/>. Will be populated with the insert ID.
+		/// </param>
+		/// <param name="sql">
+		/// A <see cref="System.String"/>. The SQL query
+		/// </param>
+		/// <param name="args">
+		/// A <see cref="MySqlParameter[]"/>. Query parameters.
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.Boolean"/>
+		/// </returns>
+    public static bool QueryInsert(out long id, string sql,
+                                   params MySqlParameter[] args)
+    {
+      try {
+        MySqlCommand cmd = dbcon.CreateCommand();
+        cmd.CommandText = sql;
+
+        if (args.Length > 0)
+          foreach (MySqlParameter p in args)
+            cmd.Parameters.Add(p);
+
+        cmd.ExecuteNonQuery();
+        id = cmd.LastInsertedId;
+        cmd.Dispose();
+        cmd = null;
+      }
+      catch (Exception e) {
+        Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+        id = 0;
+        return false;
+      }
+
+      return true;
+    }
+
+    /// <summary>
+    /// Performs a database query
+    /// </summary>
+    /// <param name="sql"></param>
+    /// <param name="args"></param>
+    /// <returns></returns>
+    public static bool Query(out MySqlDataReader rd,
+                             string sql,
+                             params MySqlParameter[] args)
+    {
+      try {
+        MySqlCommand cmd = dbcon.CreateCommand();
+        cmd.CommandText = sql;
+
+        if (args.Length > 0)
+          foreach (object o in args)
+            cmd.Parameters.Add(o);
+
+        rd = cmd.ExecuteReader();
+        cmd.Dispose();
+        cmd = null;
+
+        return true;
+      }
+      catch (Exception e) {
+        Log.Debug("DB error: {0} {1}\n", e.Message, e.StackTrace);
+      }
+
+      rd = null;
+
+      return false;
+    }
+
+    /// <summary>
+    /// Dispose, close db e t c.
+    /// </summary>
+    public static void Dispose()
+    {
+      if (dbcon != null) {
+        dbcon.Clone();
+        dbcon.Dispose();
+        dbcon = null;
+      }
+    }
 	}
 
 	/// <summary>
@@ -277,52 +416,65 @@ namespace MediaDB
 		public string Password;
 	}
 
-	/// <summary>
-	/// Class representing a media type
-	/// </summary>
-	public class MediaType
-	{
-		/// <summary>
-		/// Extension associated with this mediatype
-		/// </summary>
-		public string Extension;
+  /// <summary>
+  /// Media type object
+  /// </summary>
+  public class MediaType
+  {
+    private string ext;
+    /// <summary>
+    /// Extensions (comma separated string) associated to this media type
+    /// </summary>
+    public string Extension
+    {
+      get { return ext; }
+      set {
+        exts = new ArrayList();
+        ext = value;
+        foreach (string t in ext.Split(new char[] { ',' }))
+          exts.Add(t.Trim().ToLower());
+      }
+    }
 
-		/// <summary>
-		/// Mimetype for this media type
-		/// </summary>
-		public string Mimetype;
+    private ArrayList exts = new ArrayList();
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		public MediaType() {}
+    /// <summary>
+    /// Extensions associated to this media
+    /// </summary>
+    public ArrayList Extensions
+    {
+      get { return exts; }
+      private set { exts = value; }
+    }
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="extension">
-		/// A <see cref="System.String"/>
-		/// </param>
-		/// <param name="mimetype">
-		/// A <see cref="System.String"/>
-		/// </param>
-		public MediaType(string extension, string mimetype)
-		{
-			Extension = extension;
-			Mimetype = mimetype;
-		}
+    /// <summary>
+    /// Mimetype of this media type
+    /// </summary>
+    public string Mimetype;
 
-		/// <summary>
-		/// String casting method.
-		/// </summary>
-		/// <returns>
-		/// A <see cref="System.String"/>
-		/// </returns>
-		public override string ToString()
-		{
-			return String.Format("MediaType({0}, {1})", Extension, Mimetype);
-		}
-	}
+    /// <summary>
+    /// Checks if <paramref name="extension"/> is handled by this mediatype
+    /// </summary>
+    /// <param name="extension"></param>
+    /// <returns></returns>
+    public bool HasExtension(string extension)
+    {
+      if (!extension.StartsWith("."))
+        extension = "." + extension;
+
+      return exts.Contains(extension.ToLower());
+    }
+
+    /// <summary>
+    /// Cast to string
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+      return String.Format("MediaType(\"{0}\", \"{1}\")",
+                           ext, Mimetype);
+    }
+  }
 
 	/// <summary>
 	/// Class representing a preview image template
