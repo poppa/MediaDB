@@ -1,4 +1,4 @@
-/* Handler.cs
+/* FileHandler.cs
  *
  * Copyright (C) 2010  Pontus Östlund
  *
@@ -25,8 +25,12 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Threading;
 using Goheer.EXIF;
+using System.Collections;
+using System.Collections.Generic;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
-namespace MediaDB
+namespace MediaDB.Backend
 {
 	/// <summary>
 	/// Base handler class
@@ -47,8 +51,6 @@ namespace MediaDB
 		/// The media file object
 		/// </summary>
 		public MediaFile MediaFile { get; private set; }
-
-    //private static Mutex mtx = new Mutex();
 
 		/// <summary>
 		/// Constructor
@@ -71,7 +73,7 @@ namespace MediaDB
 		/// </summary>
 		public void Process()
 		{
-      if ((MediaFile = Settings.GetMediaFile(File.FullName)) == null) {
+      if ((MediaFile = Manager.GetMediaFile(File.FullName)) == null) {
         MediaFile = new MediaFile();
         MediaFile.Name = File.Name;
         MediaFile.FullName = File.FullName;
@@ -93,57 +95,88 @@ namespace MediaDB
       int x = MediaFile.Width;
       int y = MediaFile.Height;
 
-      if (x > Settings.PreviewMinWidth || y > Settings.PreviewMinHeight) {
-        Log.Debug("### Generate previews for {0}\n", MediaFile.FullName);
+      ImageFormat fmt;
+      string mime;
+      GetPreviewFormat(out fmt, out mime);
+      EncoderParameters eparams = new EncoderParameters(1);
+      eparams.Param[0] = new EncoderParameter(Encoder.Quality, 
+                                              Manager.PreviewQuality);
+      ImageCodecInfo ici = Gfx.GetEncoderInfo(mime);
 
-        foreach (Preview p in Settings.Previews) {
-          int[] c = Backend.Gfx.GetConstraints(x, y, (int)p.Width,
-					                                     (int)p.Height);
-          Bitmap n = Backend.Gfx.ScaleImage(img, c[0], c[1]);
-          ImageFormat fmt;
-					string mime;
-          GetPreviewFormat(out fmt, out mime);
+      if (x > Manager.PreviewMinWidth || y > Manager.PreviewMinHeight) {
+        //Log.Debug("### Generate previews for {0}\n", MediaFile.FullName);
+        foreach (Preview p in Manager.Previews) {
+          if (x < p.Width && y < p.Height)
+            continue;
 
-					MemoryStream s = new MemoryStream();
-					n.Save(s, fmt);
-
-					PreviewFile pf = new PreviewFile();
-					pf.Width = n.Width;
-					pf.Height = n.Height;
-					pf.Size = s.Length;
-					pf.Mimetype = mime;
-					pf.Name = p.Name;
-
-					byte[] buf = new byte[s.Length];
-					s.Read(buf, 0, buf.Length);
-					pf.Data = System.Text.Encoding.Default.GetString(buf);
-
+          PreviewFile pf = lowGenImg(ref img, p, fmt, mime, ici, eparams);
 					MediaFile.Previews.Add(pf);
-
-					s.Close();
-					s.Dispose();
-					s = null;
-
-					buf = null;
-
-          n.Dispose();
-          n = null;
         }
       }
       else {
-        Log.Debug("### Copy org to preview for {0}\n", MediaFile.FullName);
+        Preview p = new Preview();
+        p.Width = img.Width;
+        p.Height = img.Height;
+        p.Name = "default";
 
-        Bitmap n = Backend.Gfx.ScaleImage(img, img.Width, img.Height);
-        ImageFormat fmt;
-				string mime;
-        GetPreviewFormat(out fmt, out mime);
-
-				Log.Debug("SKIPPING SMALL IMAGE FOR NOW\n");
-
-        //n.Save(Tools.BuildPath(Settings.TmpDir, tname), fmt);
-        n.Dispose();
-        n = null;
+        PreviewFile pf = lowGenImg(ref img, p, fmt, mime, ici, eparams);
+        MediaFile.Previews.Add(pf);
       }
+
+			eparams.Dispose();
+			eparams = null;
+			ici = null;
+			fmt = null;
+			img.Dispose();
+			img = null;
+    }
+
+    /// <summary>
+    /// Generates a preview image and populates a new 
+    /// <see cref="PreviewFile"/> object.
+    /// </summary>
+    /// <param name="img"></param>
+    /// <param name="p"></param>
+    /// <param name="fmt"></param>
+    /// <param name="mime"></param>
+    /// <param name="ici"></param>
+    /// <param name="eparams"></param>
+    /// <returns></returns>
+    private PreviewFile lowGenImg(ref Bitmap img, 
+                                  Preview p, 
+                                  ImageFormat fmt,
+                                  string mime,
+                                  ImageCodecInfo ici, 
+                                  EncoderParameters eparams)
+    {
+      int[] c = Gfx.GetConstraints(MediaFile.Width, MediaFile.Height, 
+                                   (int)p.Width, (int)p.Height);
+      Bitmap n = Gfx.ScaleImage(img, c[0], c[1]);
+      MemoryStream s = new MemoryStream();
+
+      //img = (Bitmap)n.Clone();
+
+      if (ici != null)
+        n.Save(s, ici, eparams);
+      else
+        n.Save(s, fmt);
+
+      PreviewFile pf = new PreviewFile();
+      pf.Width = n.Width;
+      pf.Height = n.Height;
+      pf.Size = s.Length;
+      pf.Mimetype = mime;
+      pf.Name = p.Name;
+      pf.Data = s.ToArray();
+
+      s.Close();
+      s.Dispose();
+      s = null;
+
+      n.Dispose();
+      n = null;
+
+      return pf;
     }
 
     /// <summary>
@@ -157,14 +190,18 @@ namespace MediaDB
       fmt = ImageFormat.Jpeg;
 			mimetype = "image/jpeg";
 
-      if (MediaType.Mimetype == "image/png") {
-        fmt = ImageFormat.Png;
-				mimetype = "image/png";
-      }
-      else if (MediaType.Mimetype == "image/gif") {
-        fmt = ImageFormat.Gif;
-				mimetype = "image/gif";
-      }
+			switch (MediaType.Mimetype) {
+				case "image/png":
+				case "image/x-eps":
+					fmt = ImageFormat.Png;
+					mimetype = "image/png";
+					break;
+
+				case "image/gif":
+					fmt = ImageFormat.Gif;
+					mimetype = "image/gif";
+					break;
+			}
     }
 
     /// <summary>
@@ -172,9 +209,9 @@ namespace MediaDB
     /// </summary>
     protected void SaveFile()
     {
-      Settings.mutex.WaitOne();
+      Manager.mutex.WaitOne();
       MediaFile.Save();
-      Settings.mutex.ReleaseMutex();
+      Manager.mutex.ReleaseMutex();
     }
   }
 
@@ -234,7 +271,7 @@ namespace MediaDB
         SaveFile();
 			}
 			catch (Exception e) {
-				Log.Warning("Unable to handle file ({0}): {1} {2}\n", 
+				Log.Warning("Unable to handle file ({0}): {1}\n{2}\n", 
                     File.FullName, e.Message, e.StackTrace);
 			}
 		}
@@ -263,6 +300,27 @@ namespace MediaDB
 		public new void Process()
 		{
 			base.Process();
+
+			try {
+				byte[] b = Gfx.Eps2Png(MediaFile.FullName);
+				if (b != null) {
+					MemoryStream ms = new MemoryStream(b);
+					Bitmap img = new Bitmap(ms);
+					MediaFile.Width = img.Width;
+					MediaFile.Height = img.Height;
+					GeneratePreviews(img);
+
+					ms.Close();
+					ms.Dispose();
+					ms = null;
+					img.Dispose();
+					img = null;
+				}
+			}
+			catch (Exception e) {
+				Log.Warning("{0}\n{1}\n", e.Message, e.StackTrace);
+			}
+
       SaveFile();
 		}
 	}
@@ -290,6 +348,42 @@ namespace MediaDB
 		public new void Process()
 		{
 			base.Process();
+
+      PdfReader rd = new PdfReader(MediaFile.FullName);
+      if (rd.Info.ContainsKey("Title")) {
+        string title = rd.Info["Title"].Trim();
+        if (title.Length > 0)
+          MediaFile.Title = title;
+      }
+
+      //r.NumberOfPages
+      //r.PdfVersion;
+      var p1 = rd.GetPageN(1);
+      var rect = rd.GetPageSize(p1);
+
+      MediaFile.Width = (int)rect.Width;
+      MediaFile.Height = (int)rect.Height;
+
+			try {
+				byte[] b = Gfx.Pdf2Jpeg(MediaFile.FullName);
+				if (b != null) {
+					MemoryStream ms = new MemoryStream(b);
+					Bitmap img = new Bitmap(ms);
+					GeneratePreviews(img);
+					ms.Close();
+					ms.Dispose();
+					ms = null;
+					img.Dispose();
+					img = null;
+				}
+			}
+			catch (Exception e) {
+				Log.Debug("Nonon: {0}\n{1}\n", e.Message, e.StackTrace);
+			}
+
+      rd.Close();
+      rd = null;
+
       SaveFile();
 		}
 	}

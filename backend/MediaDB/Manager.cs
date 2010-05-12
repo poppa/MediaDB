@@ -26,13 +26,14 @@ using System.Xml;
 using System.Data;
 using System.Threading;
 using MySql.Data.MySqlClient;
+using MediaDB.Backend;
 
 namespace MediaDB
 {
 	/// <summary>
 	/// Static class for reading the config file
 	/// </summary>
-	public static class Settings
+	public static class Manager
 	{
 		/// <summary>
 		/// The path to the config file
@@ -64,12 +65,12 @@ namespace MediaDB
 		/// <summary>
 		/// The width of the smallest preview template
 		/// </summary>
-		public static uint PreviewMinWidth { get; private set; }
+		public static int PreviewMinWidth { get; private set; }
 
 		/// <summary>
 		/// The height of the smallest preview template
 		/// </summary>
-		public static uint PreviewMinHeight { get; private set; }
+		public static int PreviewMinHeight { get; private set; }
 
 		/// <summary>
 		/// Number of concurrent threads to run when indexing
@@ -96,8 +97,6 @@ namespace MediaDB
 
 					_tmpdir = Path.Combine(_tmpdir, "mediadb");
 
-					Log.Debug("TMPDIR: {0}\n", _tmpdir);
-
 					if (!Tools.DirectoryExists(_tmpdir)) {
 						try {
 							Directory.CreateDirectory(_tmpdir);
@@ -120,7 +119,26 @@ namespace MediaDB
 		/// </summary>
 		public static MySqlConnection DbCon { get { return dbcon; }}
 
+    /// <summary>
+    /// Global mutex object
+    /// </summary>
     public static readonly Mutex mutex = new Mutex();
+
+    /// <summary>
+    /// Null date
+    /// </summary>
+    public static DateTime NullDate = new DateTime(1970, 01, 01, 0, 0, 0);
+
+    private static string previewQuality = null;
+    /// <summary>
+    /// Quality of preview images
+    /// </summary>
+    public static long PreviewQuality
+    {
+      get {
+        return Convert.ToInt64(previewQuality);
+      }
+    }
 
 		/// <summary>
 		/// Read the config file and populate this class
@@ -196,12 +214,13 @@ namespace MediaDB
 						break;
 
 					case "previews":
+            previewQuality = child.Attributes["quality"].Value.ToString();
 						foreach (XmlNode c in child.ChildNodes) {
 							if (c.Name == "preview") {
 								Preview pv = new Preview();
 								pv.Name = c.Attributes["name"].Value.ToString();
-								pv.Width = Convert.ToUInt32(c.Attributes["width"].Value);
-								pv.Height = Convert.ToUInt32(c.Attributes["height"].Value);
+								pv.Width = Convert.ToInt32(c.Attributes["width"].Value);
+								pv.Height = Convert.ToInt32(c.Attributes["height"].Value);
 
 								if (PreviewMinWidth == 0 || pv.Width < PreviewMinWidth)
 									PreviewMinWidth = pv.Width;
@@ -223,6 +242,11 @@ namespace MediaDB
 				}
 			}
 
+      Previews.Sort();
+      Previews.Reverse();
+
+      Log.Debug("Previews: {0}\n", Previews);
+
 			dbstr = String.Format("server={0}; "  +
 			                      "database={1};" +
                             "userid={2};"   +
@@ -237,6 +261,8 @@ namespace MediaDB
         Log.Debug("Database db: {0}\n", DatabaseInfo.Name);
 				dbcon.Open();
         //dbcon.Close();
+        DB.Query("TRUNCATE `file`");
+        DB.Query("TRUNCATE `preview`");
 			}
 			catch (Exception e) {
 				Log.Werror("Unable to connect to database: {0}\n", e.Message);
@@ -282,7 +308,7 @@ namespace MediaDB
 			MySqlDataReader r = null;
       try {
         string sql = "SELECT * FROM `file` WHERE fullname = @fn";
-        if (Query(out r, sql, DB.Param("fn", fullname))) {
+        if (DB.QueryReader(out r, sql, DB.Param("fn", fullname))) {
           if (r.HasRows) {
 						r.Read();
             mf = new MediaFile();
@@ -304,86 +330,13 @@ namespace MediaDB
       return mf;
     }
 
-		/// <summary>
-		/// Query database with insert statement.
-		/// </summary>
-		/// <param name="id">
-		/// A <see cref="System.Int64"/>. Will be populated with the insert ID.
-		/// </param>
-		/// <param name="sql">
-		/// A <see cref="System.String"/>. The SQL query
-		/// </param>
-		/// <param name="args">
-		/// A <see cref="MySqlParameter[]"/>. Query parameters.
-		/// </param>
-		/// <returns>
-		/// A <see cref="System.Boolean"/>
-		/// </returns>
-    public static bool QueryInsert(out long id, string sql,
-                                   params MySqlParameter[] args)
-    {
-      try {
-        MySqlCommand cmd = dbcon.CreateCommand();
-        cmd.CommandText = sql;
-
-        if (args.Length > 0)
-          foreach (MySqlParameter p in args)
-            cmd.Parameters.Add(p);
-
-        cmd.ExecuteNonQuery();
-        id = cmd.LastInsertedId;
-        cmd.Dispose();
-        cmd = null;
-      }
-      catch (Exception e) {
-        Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
-        id = 0;
-        return false;
-      }
-
-      return true;
-    }
-
-    /// <summary>
-    /// Performs a database query
-    /// </summary>
-    /// <param name="sql"></param>
-    /// <param name="args"></param>
-    /// <returns></returns>
-    public static bool Query(out MySqlDataReader rd,
-                             string sql,
-                             params MySqlParameter[] args)
-    {
-      try {
-        MySqlCommand cmd = dbcon.CreateCommand();
-        cmd.CommandText = sql;
-
-        if (args.Length > 0)
-          foreach (object o in args)
-            cmd.Parameters.Add(o);
-
-        rd = cmd.ExecuteReader();
-        cmd.Dispose();
-        cmd = null;
-
-        return true;
-      }
-      catch (Exception e) {
-        Log.Debug("DB error: {0} {1}\n", e.Message, e.StackTrace);
-      }
-
-      rd = null;
-
-      return false;
-    }
-
     /// <summary>
     /// Dispose, close db e t c.
     /// </summary>
     public static void Dispose()
     {
       if (dbcon != null) {
-        dbcon.Clone();
+        dbcon.Close();
         dbcon.Dispose();
         dbcon = null;
       }
@@ -479,17 +432,17 @@ namespace MediaDB
 	/// <summary>
 	/// Class representing a preview image template
 	/// </summary>
-	public class Preview
+	public class Preview : IComparable
 	{
 		/// <summary>
 		/// Max width of the preview
 		/// </summary>
-		public uint Width;
+		public int Width;
 
 		/// <summary>
 		/// Max height of the preview
 		/// </summary>
-		public uint Height;
+		public int Height;
 
 		/// <summary>
 		/// Arbitrary name of the template
@@ -513,11 +466,22 @@ namespace MediaDB
 		/// <param name="name">
 		/// A <see cref="System.String"/>
 		/// </param>
-		public Preview(uint width, uint height, string name)
+		public Preview(int width, int height, string name)
 		{
 			Width = width;
 			Height = height;
 			Name = name;
 		}
+
+    /// <summary>
+    /// Comparer method
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    public int CompareTo(object other)
+    {
+      Preview p = (Preview)other;
+      return (Width * Height).CompareTo(p.Width * p.Height);
+    }
 	}
 }

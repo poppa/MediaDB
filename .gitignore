@@ -1,6 +1,7 @@
 .deps
 *.[oac]
 *~
+*.bak
 *.stamp
 *.gmo
 *.tar.bz2

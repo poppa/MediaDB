@@ -70,6 +70,26 @@ namespace MediaDB
     }
 
     /// <summary>
+    /// Generates a temp name
+    /// </summary>
+    /// <returns></returns>
+    public static string Tmpnam()
+    {
+      return "tmp-" + Guid.NewGuid().ToString();
+    }
+
+		/// <summary>
+		/// Creates a full temporary file path 
+		/// </summary>
+		/// <returns>
+		/// A <see cref="System.String"/>
+		/// </returns>
+		public static string TmpPath()
+		{
+			return BuildPath(Manager.TmpDir, Tmpnam());
+		}
+
+    /// <summary>
     /// Build a path from arbitrary number of arguments
     /// </summary>
     /// <param name="parts"></param>

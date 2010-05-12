@@ -39,6 +39,107 @@ namespace MediaDB
       }
     }
 
+    /// <summary>
+    /// Performs a database query
+    /// </summary>
+    /// <param name="sql"></param>
+    /// <param name="args"></param>
+    /// <returns></returns>
+    public static bool QueryReader(out MySqlDataReader rd,
+                                   string sql,
+                                   params MySqlParameter[] args)
+    {
+      try {
+        MySqlCommand cmd = Manager.DbCon.CreateCommand();
+        cmd.CommandText = sql;
+
+        if (args.Length > 0)
+          foreach (object o in args)
+            cmd.Parameters.Add(o);
+
+        rd = cmd.ExecuteReader();
+        cmd.Dispose();
+        cmd = null;
+
+        return true;
+      }
+      catch (Exception e) {
+        Log.Debug("DB error: {0} {1}\n", e.Message, e.StackTrace);
+      }
+
+      rd = null;
+
+      return false;
+    }
+
+    /// <summary>
+    /// Query database with insert statement.
+    /// </summary>
+    /// <param name="id">
+    /// A <see cref="System.Int64"/>. Will be populated with the insert ID.
+    /// </param>
+    /// <param name="sql">
+    /// A <see cref="System.String"/>. The SQL query
+    /// </param>
+    /// <param name="args">
+    /// A <see cref="MySqlParameter[]"/>. Query parameters.
+    /// </param>
+    /// <returns>
+    /// A <see cref="System.Boolean"/>
+    /// </returns>
+    public static bool QueryInsert(out long id, string sql,
+                                   params MySqlParameter[] args)
+    {
+      try {
+        MySqlCommand cmd = Manager.DbCon.CreateCommand();
+        cmd.CommandText = sql;
+
+        if (args.Length > 0)
+          foreach (MySqlParameter p in args)
+            cmd.Parameters.Add(p);
+
+        cmd.ExecuteNonQuery();
+        id = cmd.LastInsertedId;
+        cmd.Dispose();
+        cmd = null;
+      }
+      catch (Exception e) {
+        Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+        id = 0;
+        return false;
+      }
+
+      return true;
+    }
+
+    /// <summary>
+    /// Plain "NonQuery" query. No query result is expected.
+    /// </summary>
+    /// <param name="sql"></param>
+    /// <param name="args"></param>
+    /// <returns></returns>
+    public static bool Query(string sql, params MySqlParameter[] args)
+    {
+      try {
+        MySqlCommand cmd = Manager.DbCon.CreateCommand();
+        cmd.CommandText = sql;
+
+        if (args.Length > 0)
+          foreach (MySqlParameter p in args)
+            cmd.Parameters.Add(p);
+
+        cmd.ExecuteNonQuery();
+        cmd.Dispose();
+        cmd = null;
+      }
+      catch (Exception e) {
+        Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+        return false;
+      }
+
+      return true;
+    }
+
 		/// <summary>
 		/// Checks if db column <paramref name="col"/> is null
 		/// </summary>

@@ -23,15 +23,17 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using MediaDB.Backend;
 //using iTextSharp.text.pdf;
 
 /// <summary>
 /// Async method template for processing a file
 /// </summary>
-delegate MediaDB.MediaFile FileProcessor(MediaDB.CrawlerFile cf,
-                                         MediaDB.Indexer idx);
+delegate MediaDB.Backend.MediaFile 
+         FileProcessor(MediaDB.Backend.CrawlerFile cf,
+                       MediaDB.Backend.Indexer idx);
 
-namespace MediaDB
+namespace MediaDB.Backend
 {
 	/// <summary>
 	/// Class for indexing a directory path. Scans recursively through the
@@ -71,8 +73,8 @@ namespace MediaDB
 		public Indexer(string path)
 		{
 			Path = path;
-			if (Settings.Threads > 0)
-				slots = Settings.Threads;
+			if (Manager.Threads > 0)
+				slots = Manager.Threads;
 
       Files = new ArrayList();
 
@@ -91,13 +93,18 @@ namespace MediaDB
 		/// </summary>
 		public void FreeSlot()
 		{
-      lock (this) {
+      //lock (this) {
         FILES_DONE++;
-        Log.Debug("\n    +++++ {0} of {1} ({2}%) done!\n\n", 
+        Log.Debug("    +++++ {0} of {1} ({2}%) done!\n",
                   FILES_DONE, TOTAL_FILES,
-                  Math.Round(((double)FILES_DONE/(double)TOTAL_FILES)*100));
+                  Math.Floor(((double)FILES_DONE/(double)TOTAL_FILES)*100));
         taken--;
-      };
+
+				if (FILES_DONE == TOTAL_FILES) {
+					Files.Clear();
+					Files = new ArrayList();
+				}
+      //};
 		}
 
 		/// <summary>
@@ -114,7 +121,7 @@ namespace MediaDB
 
 			foreach (CrawlerFile cf in Files) {
 				while (taken >= slots)
-					System.Threading.Thread.Sleep(1);
+					System.Threading.Thread.Sleep(400);
 
 				taken++;
 				FileProcessor fproc = Processor;
@@ -128,8 +135,12 @@ namespace MediaDB
 		private static void onProcess(IAsyncResult syncr)
 		{
 			FileProcessor fproc = (FileProcessor)syncr.AsyncState;
-			MediaFile mf = (MediaFile)fproc.EndInvoke(syncr);
-			Log.Debug("<<< Process done: {0}\n", mf.FullName);
+			//MediaFile mf = (MediaFile)fproc.EndInvoke(syncr);
+			fproc.EndInvoke(syncr);
+			//Log.Debug("<<< Process done: {0}\n", mf.FullName);
+			fproc = null;
+			syncr = null;
+			//mf = null;
 		}
 
 		/// <summary>
@@ -143,7 +154,7 @@ namespace MediaDB
 		/// </returns>
 		private static MediaFile Processor(CrawlerFile cf, Indexer idx)
 		{
-			Log.Debug(">>> Process file: {0}\n", cf.File.FullName);
+			//Log.Debug(">>> Process file: {0}\n", cf.File.FullName);
 
 			FileHandler h = null;
 			switch (cf.MediaType.Mimetype)
@@ -174,7 +185,9 @@ namespace MediaDB
 
 			cf = null;
 			idx.FreeSlot();
-			return h.MediaFile;
+			MediaFile m = h.MediaFile;
+			h = null;
+			return m;
 		}
 
 		/// <summary>
@@ -190,7 +203,7 @@ namespace MediaDB
 			try {
 				foreach (FileInfo file in dir.GetFiles()) {
 					MediaType mt;
-					if ((mt = Settings.GetMediaType(file)) != null)
+					if ((mt = Manager.GetMediaType(file)) != null)
 						Files.Add(new CrawlerFile(file, mt));
 				}
 			}

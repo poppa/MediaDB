@@ -24,7 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 
-namespace MediaDB
+namespace MediaDB.Backend
 {
   /// <summary>
   /// Interface for database related files
@@ -201,30 +201,32 @@ namespace MediaDB
                      " @keywords)";
 
         long tmpid;
-        if (Settings.QueryInsert(out tmpid, sql,
-                                 DB.Param("name", Name),
-                                 DB.Param("fullname", FullName),
-                                 DB.Param("mimetype", Mimetype),
-                                 DB.Param("title", Title),
-                                 DB.Param("description", Description),
-                                 DB.Param("copyright", Copyright),
-                                 DB.Param("width", Width),
-                                 DB.Param("height", Height),
-                                 DB.Param("size", Size),
-                                 DB.Param("resolution", Resolution),
-                                 DB.Param("exif", Exif),
-                                 DB.Param("created", Created),
-                                 DB.Param("modified", Modified),
-                                 DB.Param("keywords", Keywords))) {
-          Id = tmpid;
-          Log.Debug("Inserted {0} OK (ID:{1})\n", FullName, Id);
+        object mddate = null;
+        if (Modified != Manager.NullDate)
+          mddate = Modified;
 
+        if (DB.QueryInsert(out tmpid, sql,
+                           DB.Param("name", Name),
+                           DB.Param("fullname", FullName),
+                           DB.Param("mimetype", Mimetype),
+                           DB.Param("title", Title),
+                           DB.Param("description", Description),
+                           DB.Param("copyright", Copyright),
+                           DB.Param("width", Width),
+                           DB.Param("height", Height),
+                           DB.Param("size", Size),
+                           DB.Param("resolution", Resolution),
+                           DB.Param("exif", Exif),
+                           DB.Param("created", Created),
+                           DB.Param("modified", mddate),
+                           DB.Param("keywords", Keywords))) {
+          Id = tmpid;
 					foreach (PreviewFile f in Previews) {
 						f.FileId = Id;
-						if (f.Save())
-							Log.Debug("  >>> Inserted preview: {0}\n", f.Name);
-						else
-							Log.Warning("  >>> Failed inserting preview: {0}\n", f.Name);
+            if (!f.Save()) {
+              Log.Warning("  >>> Failed inserting preview \"{0}\" for \"{1}\"\n",
+                          f.Name, FullName);
+            }
 					}
 
           return true;
@@ -248,6 +250,15 @@ namespace MediaDB
       return String.Format("MediaFile(\"{0}\", \"{1}\", \"{2}x{3}\", {4}kB)",
                            FullName, Mimetype, Width, Height, Size / 1024);
     }
+
+		/*
+		public static int DESTRUCTED = 0;
+
+		~MediaFile()
+		{
+			Log.Debug("   ----- Destroy {0}\n", ++DESTRUCTED);
+		}
+		*/
 	}
 
   /// <summary>
@@ -293,7 +304,7 @@ namespace MediaDB
     /// <summary>
     /// Image data
     /// </summary>
-    public string Data = null;
+    public object Data = null;
 
 		/// <summary>
 		/// Save to database
@@ -310,14 +321,14 @@ namespace MediaDB
 						         " @name, @data)";
 
 				long tmpid;
-				if (Settings.QueryInsert(out tmpid, sql,
-				                         DB.Param("file_id", Id),
-				                         DB.Param("mimetype", Mimetype),
-				                         DB.Param("width", Width),
-				                         DB.Param("height", Height),
-				                         DB.Param("size", Size),
-				                         DB.Param("name", Name),
-				                         DB.Param("data", Data)))
+				if (DB.QueryInsert(out tmpid, sql,
+				                   DB.Param("file_id", FileId),
+				                   DB.Param("mimetype", Mimetype),
+				                   DB.Param("width", Width),
+				                   DB.Param("height", Height),
+				                   DB.Param("size", Size),
+				                   DB.Param("name", Name),
+				                   DB.Param("data", Data)))
 				{
 					Id = tmpid;
 					return true;

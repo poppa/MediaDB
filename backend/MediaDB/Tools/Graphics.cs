@@ -1,4 +1,4 @@
-﻿/* Graphics.cs
+/* Graphics.cs
  *
  * Copyright (C) 2010  Pontus Östlund
  *
@@ -20,12 +20,13 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
-//using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.Drawing.Imaging;
 
-namespace MediaDB.Backend
+namespace MediaDB
 {
   /// <summary>
   /// Various graphics related methods
@@ -52,6 +53,13 @@ namespace MediaDB.Backend
       return r;
     }
 
+    /// <summary>
+    /// Scale image to <paramref name="width"/> and <paramref name="height"/>
+    /// </summary>
+    /// <param name="img"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <returns></returns>
     public static Bitmap ScaleImage(Bitmap img, int width, int height)
     {
       Bitmap bmp = new Bitmap(img, width, height);
@@ -68,5 +76,111 @@ namespace MediaDB.Backend
       g = null;
       return bmp;
     }
-  }
+
+    /// <summary>
+    /// Returns a <see cref="ImageCodecInfo"/> info for
+    /// <paramref name="mimetype"/> that can be used for compression settings.
+    /// </summary>
+    /// <param name="mimetype"></param>
+    /// <returns></returns>
+    public static ImageCodecInfo GetEncoderInfo(string mimetype)
+    {
+      foreach (ImageCodecInfo ici in ImageCodecInfo.GetImageDecoders()) {
+        if (ici.MimeType == mimetype)
+          return ici;
+      }
+
+      return null;
+		}
+
+		/// <summary>
+		/// Create a JPEG image of PDF file <paramref name="path"/>.
+		/// </summary>
+		/// <param name="path">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.Byte[]"/>
+		/// </returns>
+		public static byte[] Pdf2Jpeg(string path)
+		{
+			string tmp = Tools.TmpPath() + ".jpg";
+			string args = String.Format("-quality 80 -units PixelsPerInch " +
+			                            "-density 72x72 \"{0}[0]\" \"{1}\"",
+			                            path, tmp);
+
+			return iMagickConvert(args, tmp);
+		}
+
+		/// <summary>
+		/// Convert eps to png.
+		/// </summary>
+		/// <param name="path">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.Byte[]"/>
+		/// </returns>
+		public static byte[] Eps2Png(string path)
+		{
+			string tmp = Tools.TmpPath() + ".png";
+			string args = String.Format("-flatten -alpha Opaque -density 72 " +
+			                            "-format PNG24 -define png:bit-depth=8 " +
+			                            "-quality 9 \"{0}[0]\" \"{1}\"", path, tmp);
+
+			return iMagickConvert(args, tmp);
+		}
+
+		/// <summary>
+		/// Execute ImageMagicks "convert".
+		/// </summary>
+		/// <param name="args">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <param name="outfile">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.Byte[]"/>
+		/// </returns>
+		private static byte[] iMagickConvert(string args, string outfile)
+		{
+			System.Diagnostics.Process proc;
+			proc = new System.Diagnostics.Process();
+			proc.EnableRaisingEvents = false;
+#if LINUX
+			proc.StartInfo.FileName = "convert";
+#else
+			throw new Exception("$$$ Fix ImageMagick on Winblows as well");
+#endif
+			proc.StartInfo.Arguments = args;
+			proc.Start();
+
+			if (!proc.HasExited)
+				proc.WaitForExit();
+
+			if (proc.ExitCode == 0) {
+				var fi = new FileInfo(outfile);
+				var fs = new FileStream(outfile, FileMode.Open, FileAccess.Read);
+				byte[] buf = new byte[fi.Length];
+				fs.Read(buf, 0, buf.Length);
+				fs.Close();
+				fs.Dispose();
+				fi.Delete();
+				fi = null;
+
+				proc.Close();
+				proc.Dispose();
+				proc = null;
+
+				return buf;
+			}
+
+			proc.Close();
+			proc.Dispose();
+			proc = null;
+
+			return null;
+		}
+	}
 }
