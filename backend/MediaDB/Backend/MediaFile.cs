@@ -26,16 +26,16 @@ using MySql.Data.MySqlClient;
 
 namespace MediaDB.Backend
 {
-  /// <summary>
-  /// Interface for database related files
-  /// </summary>
-  interface IDBFile
-  {
-    /// <summary>
-    /// Save to DB. Should handle both inserts and updates
-    /// </summary>
-    /// <returns></returns>
-    bool Save();
+	/// <summary>
+	/// Interface for database related files
+	/// </summary>
+	interface IDBFile
+	{
+		/// <summary>
+		/// Save to DB. Should handle both inserts and updates
+		/// </summary>
+		/// <returns></returns>
+		bool Save();
 
 		/// <summary>
 		/// Populate the object from database record
@@ -44,7 +44,7 @@ namespace MediaDB.Backend
 		/// A <see cref="MySqlDataReader"/>
 		/// </param>
 		void SetFromSql(MySqlDataReader reader);
-  }
+	}
 
 	/// <summary>
 	/// Media file
@@ -67,6 +67,16 @@ namespace MediaDB.Backend
 		public string FullName = null;
 
 		/// <summary>
+		/// Name of the directory
+		/// </summary>
+		public string DirName = null;
+
+		/// <summary>
+		/// ID of directory this file belongs to
+		/// </summary>
+		public long DirectoryId = 0;
+
+		/// <summary>
 		/// File title
 		/// </summary>
 		public string Title = null;
@@ -76,10 +86,10 @@ namespace MediaDB.Backend
 		/// </summary>
 		public string Description = null;
 
-    /// <summary>
-    /// File mimetype
-    /// </summary>
-    public string Mimetype = null;
+		/// <summary>
+		/// File mimetype
+		/// </summary>
+		public string Mimetype = null;
 
 		/// <summary>
 		/// Copyright info
@@ -101,15 +111,15 @@ namespace MediaDB.Backend
 		/// </summary>
 		public long Size = 0;
 
-    /// <summary>
-    /// Raw exif info
-    /// </summary>
-    public string Exif = null;
+		/// <summary>
+		/// Raw exif info
+		/// </summary>
+		public string Exif = null;
 
-    /// <summary>
-    /// Keywords
-    /// </summary>
-    public string Keywords = null;
+		/// <summary>
+		/// Keywords
+		/// </summary>
+		public string Keywords = null;
 
 		/// <summary>
 		/// Image resolution
@@ -121,25 +131,20 @@ namespace MediaDB.Backend
 		/// </summary>
 		public DateTime Created = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
-    /// <summary>
-    /// File modification time
-    /// </summary>
-    public DateTime Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+		/// <summary>
+		/// File modification time
+		/// </summary>
+		public DateTime Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
-    /// <summary>
-    /// Array of preview images
-    /// </summary>
-    public ArrayList Previews = new ArrayList();
+		/// <summary>
+		/// Array of preview images
+		/// </summary>
+		public ArrayList Previews = new ArrayList();
 
-    /// <summary>
-    /// Array of category id's this file belongs to
-    /// </summary>
-    public int[] Categories = { };
-
-    /// <summary>
-    /// Directory in dir tree this file blongs to
-    /// </summary>
-    public int DirecotryTreeId = 0;
+		/// <summary>
+		/// Array of category id's this file belongs to
+		/// </summary>
+		public int[] Categories = { };
 
 		/// <summary>
 		/// Populate object from database record
@@ -153,9 +158,8 @@ namespace MediaDB.Backend
 				switch (reader.GetName(i)) {
 					case "id": Id = reader.GetInt64(i); break;
 					case "name": Name = reader.GetString(i); break;
-					case "fullname":
-						FullName = reader.GetString(i);
-						break;
+					case "fullname": FullName = reader.GetString(i); break;
+					case "dirname": DirName = reader.GetString(i); break;
 					case "mimetype": Mimetype = reader.GetString(i); break;
 					case "title":
 						Title = DB.IsNull(reader[i]) ? null : reader.GetString(i);
@@ -174,7 +178,10 @@ namespace MediaDB.Backend
 						Exif = DB.IsNull(reader[i]) ? null : reader.GetString(i);
 						break;
 					case "created": Created = reader.GetDateTime(i); break;
-					case "modified": Modified = reader.GetDateTime(i); break;
+					case "modified":
+						if (!DB.IsNull(reader[i]))
+							Modified = reader.GetDateTime(i);
+						break;
 					case "keywords":
 						Keywords = DB.IsNull(reader[i]) ? null : reader.GetString(i);
 						break;
@@ -188,68 +195,68 @@ namespace MediaDB.Backend
 		/// <returns>
 		/// A <see cref="System.Boolean"/>
 		/// </returns>
-    public bool Save()
-    {
-      if (Id == 0) {
-        string sql = "INSERT INTO `file` (name, fullname, mimetype,"    +
-                     " title, description, copyright, width, height,"   +
-                     " size, resolution, exif, created, modified,"      +
-                     " keywords) "                                      +
-                     "VALUES (@name, @fullname, @mimetype, @title,"     +
-                     " @description, @copyright, @width, @height,"      +
-                     " @size, @resolution, @exif, @created, @modified," +
-                     " @keywords)";
+		public bool Save()
+		{
+			if (Id == 0) {
+				string sql = "INSERT INTO `file` (name, fullname, dirname, mimetype," +
+				             " title, description, copyright, width, height, size,"   +
+				             " resolution, exif, created, modified, keywords) "       +
+				             "VALUES (@name, @fullname, @dirname, @mimetype, @title," +
+				             " @description, @copyright, @width, @height, @size, "    +
+				             " @resolution, @exif, @created, @modified, @keywords)";
 
-        long tmpid;
-        object mddate = null;
-        if (Modified != Manager.NullDate)
-          mddate = Modified;
+				long tmpid;
+				object mddate = null;
+				if (Modified != Manager.NullDate)
+					mddate = Modified;
 
-        if (DB.QueryInsert(out tmpid, sql,
-                           DB.Param("name", Name),
-                           DB.Param("fullname", FullName),
-                           DB.Param("mimetype", Mimetype),
-                           DB.Param("title", Title),
-                           DB.Param("description", Description),
-                           DB.Param("copyright", Copyright),
-                           DB.Param("width", Width),
-                           DB.Param("height", Height),
-                           DB.Param("size", Size),
-                           DB.Param("resolution", Resolution),
-                           DB.Param("exif", Exif),
-                           DB.Param("created", Created),
-                           DB.Param("modified", mddate),
-                           DB.Param("keywords", Keywords))) {
-          Id = tmpid;
+				if (DB.QueryInsert(out tmpid, sql,
+				                   DB.Param("name", Name),
+				                   DB.Param("fullname", FullName),
+				                   DB.Param("dirname", DirName),
+				                   DB.Param("mimetype", Mimetype),
+				                   DB.Param("title", Title),
+				                   DB.Param("description", Description),
+				                   DB.Param("copyright", Copyright),
+				                   DB.Param("width", Width),
+				                   DB.Param("height", Height),
+				                   DB.Param("size", Size),
+				                   DB.Param("resolution", Resolution),
+				                   DB.Param("exif", Exif),
+				                   DB.Param("created", Created),
+				                   DB.Param("modified", mddate),
+				                   DB.Param("keywords", Keywords)))
+				{
+					Id = tmpid;
 					foreach (PreviewFile f in Previews) {
 						f.FileId = Id;
-            if (!f.Save()) {
-              Log.Warning("  >>> Failed inserting preview \"{0}\" for \"{1}\"\n",
-                          f.Name, FullName);
-            }
+						if (!f.Save()) {
+							Log.Warning("  >>> Failed inserting preview \"{0}\" for " +
+							            "\"{1}\"\n", f.Name, FullName);
+						}
 					}
 
-          return true;
-        }
-        else {
-          Log.Debug("Failed inserting {0} into database!\n", FullName);
-          return false;
-        }
-      }
-      else {
-        return false;
-      }
-    }
+					return true;
+				}
+				else {
+					Log.Debug("Failed inserting {0} into database!\n", FullName);
+					return false;
+				}
+			}
+			else {
+				return false;
+			}
+		}
 
-    /// <summary>
-    /// String casting method
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
-    {
-      return String.Format("MediaFile(\"{0}\", \"{1}\", \"{2}x{3}\", {4}kB)",
-                           FullName, Mimetype, Width, Height, Size / 1024);
-    }
+		/// <summary>
+		/// String casting method
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return String.Format("MediaFile(\"{0}\", \"{1}\", \"{2}x{3}\", {4}kB)",
+			                     FullName, Mimetype, Width, Height, Size / 1024);
+		}
 
 		/*
 		public static int DESTRUCTED = 0;
@@ -261,50 +268,35 @@ namespace MediaDB.Backend
 		*/
 	}
 
-  /// <summary>
-  /// Preview file
-  /// </summary>
-  class PreviewFile : IDBFile
-  {
-    /// <summary>
-    /// Database ID
-    /// </summary>
-    public long Id = 0;
+	/// <summary>
+	/// Directory in database
+	/// </summary>
+	class Directory : IDBFile
+	{
+		/// <summary>
+		/// MySQL id
+		/// </summary>
+		public long Id;
 
-    /// <summary>
-    /// Preview of file
-    /// </summary>
-    public long FileId = 0;
+		/// <summary>
+		/// Parent directory id
+		/// </summary>
+		public long ParentId;
 
-    /// <summary>
-    /// Preview's mimetype
-    /// </summary>
-    public string Mimetype = null;
+		/// <summary>
+		/// Id of base path this directory belongs to
+		/// </summary>
+		public long BasePathId;
 
-    /// <summary>
-    /// Preview identifier name
-    /// </summary>
-    public string Name = null;
+		/// <summary>
+		/// Directory name
+		/// </summary>
+		public string Name;
 
-    /// <summary>
-    /// Width of preview
-    /// </summary>
-    public int Width = 0;
-
-    /// <summary>
-    /// Height of preview
-    /// </summary>
-    public int Height = 0;
-
-    /// <summary>
-    /// File size
-    /// </summary>
-    public long Size = 0;
-
-    /// <summary>
-    /// Image data
-    /// </summary>
-    public object Data = null;
+		/// <summary>
+		/// Directory path
+		/// </summary>
+		public string FullName;
 
 		/// <summary>
 		/// Save to database
@@ -312,13 +304,85 @@ namespace MediaDB.Backend
 		/// <returns>
 		/// A <see cref="System.Boolean"/>
 		/// </returns>
-    public bool Save()
-    {
+		public bool Save()
+		{
+			return true;
+		}
+
+		/// <summary>
+		/// Populate object from database record
+		/// </summary>
+		/// <param name="reader">
+		/// A <see cref="MySqlDataReader"/>
+		/// </param>
+		public void SetFromSql(MySqlDataReader reader)
+		{
+			Id = reader.GetInt64("id");
+			ParentId = reader.GetInt64("parent_id");
+			BasePathId = reader.GetInt64("base_path_id");
+			Name = reader.GetString("name");
+			FullName = reader.GetString("fullname");
+		}
+	}
+
+	/// <summary>
+	/// Preview file
+	/// </summary>
+	class PreviewFile : IDBFile
+	{
+		/// <summary>
+		/// Database ID
+		/// </summary>
+		public long Id = 0;
+
+		/// <summary>
+		/// Preview of file
+		/// </summary>
+		public long FileId = 0;
+
+		/// <summary>
+		/// Preview's mimetype
+		/// </summary>
+		public string Mimetype = null;
+
+		/// <summary>
+		/// Preview identifier name
+		/// </summary>
+		public string Name = null;
+
+		/// <summary>
+		/// Width of preview
+		/// </summary>
+		public int Width = 0;
+
+		/// <summary>
+		/// Height of preview
+		/// </summary>
+		public int Height = 0;
+
+		/// <summary>
+		/// File size
+		/// </summary>
+		public long Size = 0;
+
+		/// <summary>
+		/// Image data
+		/// </summary>
+		public object Data = null;
+
+		/// <summary>
+		/// Save to database
+		/// </summary>
+		/// <returns>
+		/// A <see cref="System.Boolean"/>
+		/// </returns>
+		public bool Save()
+		{
 			if (Id == 0) {
-				string sql = "INSERT INTO `preview` (file_id, mimetype, width," +
-					           " height, size, name, data) " +
-						         "VALUES (@file_id, @mimetype, @width, @height, @size," +
-						         " @name, @data)";
+				string sql = "INSERT INTO `preview` (file_id, mimetype, width,"     +
+				             " height, size, name, data) "                          +
+				             "VALUES (@file_id, @mimetype, @width, @height, @size," +
+				             " @name, @data)";
 
 				long tmpid;
 				if (DB.QueryInsert(out tmpid, sql,
@@ -338,8 +402,8 @@ namespace MediaDB.Backend
 			else {
 
 			}
-      return false;
-    }
+			return false;
+		}
 
 		/// <summary>
 		/// Populate object from database record
@@ -351,5 +415,5 @@ namespace MediaDB.Backend
 		{
 
 		}
-  }
+	}
 }

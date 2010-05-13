@@ -38,23 +38,23 @@ namespace MediaDB
 			Log.LogFile = Tools.BuildPath(t,"temp","mediadb.log");
 			string cfg = "/home/pontus/temp/config.xml";
 #else
-      Log.LogFile = Path.Combine(@"\tmp", "mediadb.log");
+			Log.LogFile = Path.Combine(@"\tmp", "mediadb.log");
 			string cfg = @"\tmp\config.xml";
 #endif
 #else
 			string cfg = args[1];
 #endif
 
-      if (Manager.Init(cfg)) {
-        ArrayList idx = new ArrayList();
-        foreach (string path in Manager.Paths)
-          idx.Add(new Backend.Indexer(path));
+			if (Manager.Init(cfg)) {
+				ArrayList idx = new ArrayList();
+				foreach (BasePath path in Manager.BasePaths)
+					idx.Add(new Backend.Indexer(path));
 
-        foreach (Backend.Indexer i in idx)
-          i.Start();
-      }
+				foreach (Backend.Indexer i in idx)
+					i.Start();
+			}
 
-      Log.End();
+			Log.End();
 
 			Log.Debug(" # {0}\n", DateTime.Now - start);
 
@@ -66,8 +66,8 @@ namespace MediaDB
 			//Thread backend = new Thread(new ThreadStart(MainLoop));
 			//backend.Start();
 			//backend.Join();
-      
-      Manager.Dispose();
+
+			Manager.Dispose();
 
 			Environment.Exit(0);
 		}

@@ -24,62 +24,66 @@ using System.IO;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml;
 
 namespace MediaDB
 {
-	public class Tools
+	/// <summary>
+	/// Variuos helper methods
+	/// </summary>
+	public static class Tools
 	{
 #if LINUX
-    public const char DIR_SEPARATOR = '/';
-    public const string DIR_SEPARATOR_S = "/";
+		public const char DIR_SEPARATOR = '/';
+		public const string DIR_SEPARATOR_S = "/";
 #else
-    public const char DIR_SEPARATOR = '\\';
-    public const string DIR_SEPARATOR_S = "\\";
+		public const char DIR_SEPARATOR = '\\';
+		public const string DIR_SEPARATOR_S = "\\";
 #endif
 
 		public static Encoding IsoEncoder = Encoding.GetEncoding("iso-8859-1");
 
-    /// <summary>
-    /// Checks if path is a directory
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
+		/// <summary>
+		/// Checks if path is a directory
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
 		public static bool IsDir(string path)
 		{
 			return new DirectoryInfo(path).Exists;
 		}
 
-    /// <summary>
-    /// Checks if path exists
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    public static bool FileExists(string path)
-    {
-      return new FileInfo(path).Exists;
-    }
-
-    /// <summary>
-    /// Checks if directory path exists
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    public static bool DirectoryExists(string path)
-    {
-      return new DirectoryInfo(path).Exists;
-    }
-
-    /// <summary>
-    /// Generates a temp name
-    /// </summary>
-    /// <returns></returns>
-    public static string Tmpnam()
-    {
-      return "tmp-" + Guid.NewGuid().ToString();
-    }
+		/// <summary>
+		/// Checks if path exists
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static bool FileExists(string path)
+		{
+			return new FileInfo(path).Exists;
+		}
 
 		/// <summary>
-		/// Creates a full temporary file path 
+		/// Checks if directory path exists
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static bool DirectoryExists(string path)
+		{
+			return new DirectoryInfo(path).Exists;
+		}
+
+		/// <summary>
+		/// Generates a temp name
+		/// </summary>
+		/// <returns></returns>
+		public static string Tmpnam()
+		{
+			return "tmp-" + Guid.NewGuid().ToString();
+		}
+
+		/// <summary>
+		/// Creates a full temporary file path
 		/// </summary>
 		/// <returns>
 		/// A <see cref="System.String"/>
@@ -89,15 +93,15 @@ namespace MediaDB
 			return BuildPath(Manager.TmpDir, Tmpnam());
 		}
 
-    /// <summary>
-    /// Build a path from arbitrary number of arguments
-    /// </summary>
-    /// <param name="parts"></param>
-    /// <returns></returns>
-    public static string BuildPath(params string[] parts)
-    {
-      return String.Join(DIR_SEPARATOR_S, parts);
-    }
+		/// <summary>
+		/// Build a path from arbitrary number of arguments
+		/// </summary>
+		/// <param name="parts"></param>
+		/// <returns></returns>
+		public static string BuildPath(params string[] parts)
+		{
+			return String.Join(DIR_SEPARATOR_S, parts);
+		}
 
 		public static string IsoEncode(string s)
 		{
@@ -111,130 +115,207 @@ namespace MediaDB
 			return s;
 		}
 
-    /// <summary>
-    /// Exit application
-    /// </summary>
-    public static void Exit()
-    {
-      Exit(0);
-    }
+		/// <summary>
+		/// Exit application
+		/// </summary>
+		public static void Exit()
+		{
+			Exit(0);
+		}
 
-    /// <summary>
-    /// Exit application with code
-    /// </summary>
-    /// <param name="code"></param>
-    public static void Exit(int code)
-    {
+		/// <summary>
+		/// Exit application with code
+		/// </summary>
+		/// <param name="code"></param>
+		public static void Exit(int code)
+		{
 #if DEBUG
-      Console.WriteLine("\n------------------");
-      Console.WriteLine("Hit enter to quit:");
-      Console.ReadLine();
+			Console.WriteLine("\n------------------");
+			Console.WriteLine("Hit enter to quit:");
+			Console.ReadLine();
 #endif
-      Environment.Exit(code);
-    }
+			Environment.Exit(code);
+		}
 	}
 
-  /// <summary>
-  /// A static class for logging
-  /// </summary>
+	/// <summary>
+	/// Various XML helpers
+	/// </summary>
+	public static class XML
+	{
+		/// <summary>
+		///   Find node with local name <paramref name="name"/> in
+		///   <paramref name="node"/> .
+		/// </summary>
+		/// <param name="name">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <param name="node">
+		/// A <see cref="XmlNode"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="XmlNode"/>
+		/// </returns>
+		public static XmlNode FindNode(string name, XmlNode node)
+		{
+			foreach (XmlNode child in node) {
+				if (child.NodeType != XmlNodeType.Element)
+					continue;
+
+				//Log.Debug("$$$ SEARCH: {0}\n", child.Name);
+				if (child.LocalName == name)
+					return child;
+
+				if (child.FirstChild != null && child.FirstChild.HasChildNodes)
+					return FindNode(name, child);
+			}
+
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// A static class for logging
+	/// </summary>
 	public static class Log
 	{
-    /// <summary>
-    /// Directory path where to store the log
-    /// </summary>
-    public static string Path = Environment.GetEnvironmentVariable("TEMP");
+		/// <summary>
+		/// Directory path where to store the log
+		/// </summary>
+		public static string Path = Environment.GetEnvironmentVariable("TEMP");
 
-    /// <summary>
-    /// Name of the log file
-    /// </summary>
-    public static string FileName = "my.log";
+		/// <summary>
+		/// Name of the log file
+		/// </summary>
+		public static string FileName = "my.log";
 
-    private static string logfile = null;
+		private static string logfile = null;
 
-    /// <summary>
-    /// Full path to logfile
-    /// </summary>
-    public static string LogFile {
-      get {
-        if (logfile == null)
-          return Tools.BuildPath(Path, FileName);
+		/// <summary>
+		/// Full path to logfile
+		/// </summary>
+		public static string LogFile {
+			get {
+				if (logfile == null)
+					return Tools.BuildPath(Path, FileName);
 
-        return logfile;
-      }
+				return logfile;
+			}
 
-      set {
-        logfile = value;
-      }
-    }
+			set {
+				logfile = value;
+			}
+		}
 
-    /// <summary>
-    /// Write to stderr
-    /// </summary>
-    /// <param name="msg"></param>
-    /// <param name="rest"></param>
+		/// <summary>
+		/// Write to stderr
+		/// </summary>
+		/// <param name="msg"></param>
+		/// <param name="rest"></param>
 		public static void Werror(string msg, params object[] rest)
 		{
 			Console.Error.Write(msg, rest);
 		}
 
-    /// <summary>
-    /// 	<para>Write the log message to the console</para>
-    /// 	<para>Behaves like <see cref="System.Console.WriteLine" /></para>
-    /// </summary>
-    /// <param name="format"><see cref="System.String.Format" /></param>
-    /// <param name="rest">Arbitrary number of replacements for format</param>
-    public static void Debug(string format, params object[] rest)
-    {
+		/// <summary>
+		///   <para>Write the log message to the console</para>
+		///   <para>Behaves like <see cref="System.Console.WriteLine" /></para>
+		/// </summary>
+		/// <param name="format"><see cref="System.String.Format" /></param>
+		/// <param name="rest">Arbitrary number of replacements for format</param>
+		public static void Debug(string format, params object[] rest)
+		{
 #if DEBUG
-      if (rest.Length > 0)
-        format = String.Format(format, rest);
+			if (rest.Length > 0)
+				format = String.Format(format, rest);
 
-      Console.Write(format);
+			Console.Write(format);
 #endif
-    }
+		}
 
-    /// <summary>
-    /// Write a warning message to stdout
-    /// </summary>
-    /// <param name="format"></param>
-    /// <param name="rest"></param>
-    public static void Warning(string format, params object[] rest)
-    {
-      if (rest.Length > 0)
-        format = String.Format(format, rest);
+		/// <summary>
+		/// Write a warning message to stdout
+		/// </summary>
+		/// <param name="format"></param>
+		/// <param name="rest"></param>
+		public static void Warning(string format, params object[] rest)
+		{
+			if (rest.Length > 0)
+				format = String.Format(format, rest);
 
-      Console.Write("[warning] {0}", format);
-    }
+			Console.Write("[warning] {0}", format);
+		}
 
-    private static System.IO.TextWriter tw;
+		/// <summary>
+		/// Write a notice message to stdout
+		/// </summary>
+		/// <param name="format"></param>
+		/// <param name="rest"></param>
+		public static void Notice(string format, params object[] rest)
+		{
+			if (rest.Length > 0)
+				format = String.Format(format, rest);
 
-    /// <summary>
-    /// Write to file
-    /// </summary>
-    /// <param name="format"></param>
-    /// <param name="rest"></param>
-    public static void File(string format, params object[] rest)
-    {
-      try {
-        if (rest.Length > 0) format = String.Format(format, rest);
-        if (tw == null) tw = new System.IO.StreamWriter(LogFile, true);
-        tw.Write(format);
-      }
-      catch (Exception e) {
-        Log.Werror(e.Message);
-      }
-    }
+			Console.Write("[notice] {0}", format);
+		}
 
-    /// <summary>
-    /// End the logger. Closes the file handler if it's been used
-    /// </summary>
-    public static void End()
-    {
-      if (tw != null) {
-        tw.Close();
-        tw.Dispose();
-        tw = null;
-      }
-    }
+		public static void Exception(params object[] args)
+		{
+			string s = null;
+			if (args.Length == 0)
+				return;
+			else if (args.Length == 1) {
+				Exception e = (Exception)args[0];
+				s = e.Message;
+#if DEBUG
+				s += "\n" +  e.StackTrace;
+#endif
+			}
+			else {
+				s = (string)args[0];
+				Exception e = (Exception)args[args.Length-1];
+				ArrayList al = new ArrayList(args.Length-1);
+				for (int i = 0; i < al.Count; i++)
+					al.Add(args[i]);
+				s = String.Format(s, al);
+				s += " " + e.Message;
+#if DEBUG
+				s += "\n" + e.StackTrace;
+#endif
+			}
+
+			Console.Write(s);
+		}
+
+		private static System.IO.TextWriter tw;
+
+		/// <summary>
+		/// Write to file
+		/// </summary>
+		/// <param name="format"></param>
+		/// <param name="rest"></param>
+		public static void File(string format, params object[] rest)
+		{
+			try {
+				if (rest.Length > 0) format = String.Format(format, rest);
+				if (tw == null) tw = new System.IO.StreamWriter(LogFile, true);
+				tw.Write(format);
+			}
+			catch (Exception e) {
+				Log.Werror(e.Message);
+			}
+		}
+
+		/// <summary>
+		/// End the logger. Closes the file handler if it's been used
+		/// </summary>
+		public static void End()
+		{
+			if (tw != null) {
+				tw.Close();
+				tw.Dispose();
+				tw = null;
+			}
+		}
 	}
 }

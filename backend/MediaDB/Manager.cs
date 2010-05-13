@@ -44,18 +44,17 @@ namespace MediaDB
 		/// Database connection info, host, db, user, password
 		/// </summary>
 		public static DBInfo DatabaseInfo { get; private set; }
-
-    private static string dbstr = null;
-
-		/// <summary>
-		/// Array of paths to index/scan
-		/// </summary>
-		public static ArrayList Paths { get; private set; }
+		private static string dbstr = null;
 
 		/// <summary>
-		/// Array of file types to collect
+		/// List of paths to index/scan
 		/// </summary>
-		public static ArrayList MediaTypes { get; private set; }
+		public static List<BasePath> BasePaths { get; private set; }
+
+		/// <summary>
+		/// List of file types to collect
+		/// </summary>
+		public static List<MediaType> MediaTypes { get; private set; }
 
 		/// <summary>
 		/// Array of preview templates
@@ -99,7 +98,7 @@ namespace MediaDB
 
 					if (!Tools.DirectoryExists(_tmpdir)) {
 						try {
-							Directory.CreateDirectory(_tmpdir);
+							System.IO.Directory.CreateDirectory(_tmpdir);
 						}
 						catch (Exception e) {
 							Log.Werror("Error creating tmpdir: {0}\n", e.Message);
@@ -112,33 +111,32 @@ namespace MediaDB
 			}
 		}
 
-		private static MySqlConnection dbcon;
-
 		/// <summary>
 		/// The database connection
 		/// </summary>
 		public static MySqlConnection DbCon { get { return dbcon; }}
+		private static MySqlConnection dbcon;
 
-    /// <summary>
-    /// Global mutex object
-    /// </summary>
-    public static readonly Mutex mutex = new Mutex();
+		/// <summary>
+		/// Global mutex object
+		/// </summary>
+		public static readonly Mutex mutex = new Mutex();
 
-    /// <summary>
-    /// Null date
-    /// </summary>
-    public static DateTime NullDate = new DateTime(1970, 01, 01, 0, 0, 0);
+		/// <summary>
+		/// Null date
+		/// </summary>
+		public static DateTime NullDate = new DateTime(1970, 01, 01, 0, 0, 0);
 
-    private static string previewQuality = null;
-    /// <summary>
-    /// Quality of preview images
-    /// </summary>
-    public static long PreviewQuality
-    {
-      get {
-        return Convert.ToInt64(previewQuality);
-      }
-    }
+		private static string previewQuality = null;
+		/// <summary>
+		/// Quality of preview images
+		/// </summary>
+		public static long PreviewQuality
+		{
+			get {
+				return Convert.ToInt64(previewQuality);
+			}
+		}
 
 		/// <summary>
 		/// Read the config file and populate this class
@@ -163,10 +161,10 @@ namespace MediaDB
 			}
 
 			File = file;
-			Paths = new ArrayList();
-			MediaTypes = new ArrayList();
+			MediaTypes = new List<MediaType>();
 			Previews = new ArrayList();
 			DatabaseInfo = new DBInfo();
+			BasePaths = new List<BasePath>();
 
 			XmlDocument xdoc = new XmlDocument();
 			xdoc.Load(File);
@@ -175,6 +173,8 @@ namespace MediaDB
 				Log.Warning("Malformed config file. Root node name isn't \"mediadb\"!");
 				return false;
 			}
+
+			ArrayList basePaths = new ArrayList();
 
 			foreach (XmlNode child in xdoc.FirstChild.ChildNodes) {
 				if (child.NodeType != XmlNodeType.Element)
@@ -214,7 +214,7 @@ namespace MediaDB
 						break;
 
 					case "previews":
-            previewQuality = child.Attributes["quality"].Value.ToString();
+						previewQuality = child.Attributes["quality"].Value.ToString();
 						foreach (XmlNode c in child.ChildNodes) {
 							if (c.Name == "preview") {
 								Preview pv = new Preview();
@@ -223,12 +223,12 @@ namespace MediaDB
 								pv.Height = Convert.ToInt32(c.Attributes["height"].Value);
 
 								if (PreviewMinWidth == 0 || pv.Width < PreviewMinWidth)
-									PreviewMinWidth = pv.Width;
+								    PreviewMinWidth = pv.Width;
 
 								if (PreviewMinHeight == 0 || pv.Height < PreviewMinHeight)
-									PreviewMinHeight = pv.Height;
+								    PreviewMinHeight = pv.Height;
 
-                Previews.Add(pv);
+								Previews.Add(pv);
 							}
 						}
 						break;
@@ -236,37 +236,74 @@ namespace MediaDB
 					case "paths":
 						foreach (XmlNode c in child.ChildNodes) {
 							if (c.Name == "path")
-								Paths.Add(c.FirstChild.Value);
+								basePaths.Add(c.FirstChild.Value);
 						}
 						break;
 				}
 			}
 
-      Previews.Sort();
-      Previews.Reverse();
+			Previews.Sort();
+			Previews.Reverse();
 
-      Log.Debug("Previews: {0}\n", Previews);
-
-			dbstr = String.Format("server={0}; "  +
-			                      "database={1};" +
-                            "userid={2};"   +
+			dbstr = String.Format("server={0}; "    +
+			                      "database={1};"   +
+			                      "userid={2};"     +
 			                      "password={3};",
 			                      DatabaseInfo.Host,
 			                      DatabaseInfo.Name,
 			                      DatabaseInfo.Username,
 			                      DatabaseInfo.Password);
 			try {
-        Log.Debug("Con str: {0}\n", dbstr);
 				dbcon = new MySqlConnection(dbstr);
-        Log.Debug("Database db: {0}\n", DatabaseInfo.Name);
 				dbcon.Open();
-        //dbcon.Close();
-        DB.Query("TRUNCATE `file`");
-        DB.Query("TRUNCATE `preview`");
+#if DEBUG
+				DB.Query("TRUNCATE `file`");
+				DB.Query("TRUNCATE `preview`");
+#endif
 			}
 			catch (Exception e) {
 				Log.Werror("Unable to connect to database: {0}\n", e.Message);
 				return false;
+			}
+
+			MySqlDataReader mrd;
+			if (DB.QueryReader(out mrd, "SELECT * FROM base_path")) {
+				while (mrd.Read()) {
+					string p = mrd.GetString("path");
+					long id = mrd.GetInt64("id");
+
+					if (!basePaths.Contains(p) || !Tools.DirectoryExists(p)) {
+						Log.Notice("Base path \"{0}\" is removed from config or file " +
+						           "system! Removing from database...\n", p);
+						DB.Query("DELETE FROM base_path WHERE path = @path",
+						         DB.Param("path", p));
+					}
+					else
+						BasePaths.Add(new BasePath(id, p));
+				}
+
+				DB.EndReader(ref mrd);
+			}
+
+			foreach (string path in basePaths) {
+				var t = BasePaths.Find(delegate(BasePath tp) {
+					return tp.Name == path;
+				});
+				if (t == null) {
+					if (!Tools.DirectoryExists(path)) {
+						Log.Warning("Path \"{0}\" in config file doesn't exits on file " +
+						            "system!\n");
+					}
+					else {
+						Log.Debug("+++ Add {0} to base paths\n", path);
+						long myid;
+						string sql = "INSERT INTO base_path(path) VALUES (@path)";
+						if (DB.QueryInsert(out myid, sql, DB.Param("path", path)))
+							BasePaths.Add(new BasePath(myid, path));
+						else
+							Log.Warning("Failed adding {0} to base_path!\n", path);
+					}
+				}
 			}
 
 			return true;
@@ -281,66 +318,74 @@ namespace MediaDB
 		/// <returns>
 		/// A <see cref="MediaType"/>
 		/// </returns>
-    public static MediaType GetMediaType(FileInfo file)
-    {
-      foreach (MediaType mt in MediaTypes)
-        if (mt.HasExtension(file.Extension))
-          return mt;
+		public static MediaType GetMediaType(FileInfo file)
+		{
+			return MediaTypes.Find(delegate(MediaType mt) {
+				return mt.HasExtension(file.Extension);
+			});
+		}
 
-      return null;
-    }
+		private static long filesCount = 0;
 
-    /// <summary>
-    /// Get media file for <paramref name="fullname"/>. 
-    /// If it exists in the database the media file object will be
-    /// populated. Otherwise an empty <see cref="MediaFile"/> object will 
-    /// be returned.
-    /// </summary>
-    /// <param name="fullname"></param>
-    /// <returns></returns>
-    public static MediaFile GetMediaFile(string fullname)
-    {
-      // This method is called from an async method in Indexer.cs.
-      // So lock during the DB call and release when db done.
-      mutex.WaitOne();
+		/// <summary>
+		/// Get media file for <paramref name="fullname"/>.
+		/// If it exists in the database the media file object will be
+		/// populated. Otherwise an empty <see cref="MediaFile"/> object will
+		/// be returned.
+		/// </summary>
+		/// <param name="fullname"></param>
+		/// <returns></returns>
+		public static MediaFile GetMediaFile(string fullname)
+		{
+			if (filesCount == 0) {
+				return null;
+			}
+			// This method is called from an async method in Indexer.cs.
+			// So lock during the DB call and release when db done.
+			mutex.WaitOne();
 
-      MediaFile mf = null;
+			MediaFile mf = null;
 			MySqlDataReader r = null;
-      try {
-        string sql = "SELECT * FROM `file` WHERE fullname = @fn";
-        if (DB.QueryReader(out r, sql, DB.Param("fn", fullname))) {
-          if (r.HasRows) {
+			try {
+				string sql = "SELECT * FROM `file` WHERE fullname = @fn";
+				if (DB.QueryReader(out r, sql, DB.Param("fn", fullname))) {
+					if (r.HasRows) {
 						r.Read();
-            mf = new MediaFile();
+						mf = new MediaFile();
 						mf.SetFromSql(r);
-            Log.Debug("   @@@ Found file {0} in database!\n", fullname);
-          }
+						Log.Debug("   @@@ Found file {0} in database!\n", fullname);
+					}
 
-          DB.EndReader(ref r);
-        }
-      }
-      catch (Exception e) {
-        Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+					DB.EndReader(ref r);
+				}
+			}
+			catch (Exception e) {
+				Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
 				DB.EndReader(ref r);
-      }
+			}
 
-      // Release the thread
-      mutex.ReleaseMutex();
+			// Release the thread
+			mutex.ReleaseMutex();
 
-      return mf;
-    }
+			return mf;
+		}
 
-    /// <summary>
-    /// Dispose, close db e t c.
-    /// </summary>
-    public static void Dispose()
-    {
-      if (dbcon != null) {
-        dbcon.Close();
-        dbcon.Dispose();
-        dbcon = null;
-      }
-    }
+		/// <summary>
+		/// Dispose, close db e t c.
+		/// </summary>
+		public static void Dispose()
+		{
+			if (dbcon != null) {
+				try {
+					dbcon.Close();
+					dbcon.Dispose();
+					dbcon = null;
+				}
+				catch (Exception e) {
+					Log.Debug("@ {0}\n{1}\n", e.Message, e.StackTrace);
+				}
+			}
+		}
 	}
 
 	/// <summary>
@@ -369,65 +414,101 @@ namespace MediaDB
 		public string Password;
 	}
 
-  /// <summary>
-  /// Media type object
-  /// </summary>
-  public class MediaType
-  {
-    private string ext;
-    /// <summary>
-    /// Extensions (comma separated string) associated to this media type
-    /// </summary>
-    public string Extension
-    {
-      get { return ext; }
-      set {
-        exts = new ArrayList();
-        ext = value;
-        foreach (string t in ext.Split(new char[] { ',' }))
-          exts.Add(t.Trim().ToLower());
-      }
-    }
+	/// <summary>
+	/// Base path
+	/// </summary>
+	public class BasePath
+	{
+		/// <summary>
+		/// MySql ID
+		/// </summary>
+		public long Id;
 
-    private ArrayList exts = new ArrayList();
+		/// <summary>
+		/// Path name
+		/// </summary>
+		public string Name;
 
-    /// <summary>
-    /// Extensions associated to this media
-    /// </summary>
-    public ArrayList Extensions
-    {
-      get { return exts; }
-      private set { exts = value; }
-    }
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		public BasePath() {}
 
-    /// <summary>
-    /// Mimetype of this media type
-    /// </summary>
-    public string Mimetype;
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="id">
+		/// A <see cref="System.Int64"/>
+		/// </param>
+		/// <param name="name">
+		/// A <see cref="System.String"/>
+		/// </param>
+		public BasePath(long id, string name)
+		{
+			Id = id;
+			Name = name;
+		}
+	}
 
-    /// <summary>
-    /// Checks if <paramref name="extension"/> is handled by this mediatype
-    /// </summary>
-    /// <param name="extension"></param>
-    /// <returns></returns>
-    public bool HasExtension(string extension)
-    {
-      if (!extension.StartsWith("."))
-        extension = "." + extension;
+	/// <summary>
+	/// Media type object
+	/// </summary>
+	public class MediaType
+	{
+		private string ext;
+		/// <summary>
+		/// Extensions (comma separated string) associated to this media type
+		/// </summary>
+		public string Extension
+		{
+			get { return ext; }
+			set {
+				exts = new ArrayList();
+				ext = value;
+				foreach (string t in ext.Split(new char[] { ',' }))
+					exts.Add(t.Trim().ToLower());
+			}
+		}
 
-      return exts.Contains(extension.ToLower());
-    }
+		private ArrayList exts = new ArrayList();
 
-    /// <summary>
-    /// Cast to string
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
-    {
-      return String.Format("MediaType(\"{0}\", \"{1}\")",
-                           ext, Mimetype);
-    }
-  }
+		/// <summary>
+		/// Extensions associated to this media
+		/// </summary>
+		public ArrayList Extensions
+		{
+			get { return exts; }
+			private set { exts = value; }
+		}
+
+		/// <summary>
+		/// Mimetype of this media type
+		/// </summary>
+		public string Mimetype;
+
+		/// <summary>
+		/// Checks if <paramref name="extension"/> is handled by this mediatype
+		/// </summary>
+		/// <param name="extension"></param>
+		/// <returns></returns>
+		public bool HasExtension(string extension)
+		{
+			if (!extension.StartsWith("."))
+				extension = "." + extension;
+
+			return exts.Contains(extension.ToLower());
+		}
+
+		/// <summary>
+		/// Cast to string
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return String.Format("MediaType(\"{0}\", \"{1}\")",
+			                     ext, Mimetype);
+		}
+	}
 
 	/// <summary>
 	/// Class representing a preview image template
@@ -473,15 +554,15 @@ namespace MediaDB
 			Name = name;
 		}
 
-    /// <summary>
-    /// Comparer method
-    /// </summary>
-    /// <param name="other"></param>
-    /// <returns></returns>
-    public int CompareTo(object other)
-    {
-      Preview p = (Preview)other;
-      return (Width * Height).CompareTo(p.Width * p.Height);
-    }
+		/// <summary>
+		/// Comparer method
+		/// </summary>
+		/// <param name="other"></param>
+		/// <returns></returns>
+		public int CompareTo(object other)
+		{
+			Preview p = (Preview)other;
+			return (Width * Height).CompareTo(p.Width * p.Height);
+		}
 	}
 }

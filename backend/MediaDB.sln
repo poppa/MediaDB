@@ -30,7 +30,10 @@ Global
 		StartupItem = MediaDB\MediaDB.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
-		$1.inheritsSet = null
+		$1.TabWidth = 2
+		$1.RemoveTrailingWhitespace = True
+		$1.inheritsSet = Mono
+		$1.inheritsScope = text/plain
 		$1.scope = text/x-csharp
 		$0.CSharpFormattingPolicy = $2
 		$2.IndentSwitchBody = True
@@ -50,5 +53,11 @@ Global
 		$5.MessageStyle = $6
 		$6.LineAlign = 0
 		$5.inheritsSet = Mono
+		$0.DotNetNamingPolicy = $7
+		$7.DirectoryNamespaceAssociation = None
+		$7.ResourceNamePolicy = FileFormatDefault
+		$0.StandardHeader = $8
+		$8.Text = @/* $filename\r\n *\r\n * Copyright (C) 2010  $username\r\n *\r\n * This library is free software: you can redistribute it and/or modify\r\n * it under the terms of the GNU Lesser General Public License as published by\r\n * the Free Software Foundation, either version 3 of the License, or\r\n * (at your option) any later version.\r\n *\r\n * This library is distributed in the hope that it will be useful,\r\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\r\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\r\n * GNU Lesser General Public License for more details.\r\n *\r\n * You should have received a copy of the GNU Lesser General Public License\r\n * along with this library.  If not, see <http://www.gnu.org/licenses/>.\r\n *\r\n * Author:\r\n * \t$username <$email>\r\n */
+		$8.inheritsSet = MITX11License
 	EndGlobalSection
 EndGlobal

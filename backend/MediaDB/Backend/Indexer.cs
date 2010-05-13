@@ -24,12 +24,11 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using MediaDB.Backend;
-//using iTextSharp.text.pdf;
 
 /// <summary>
 /// Async method template for processing a file
 /// </summary>
-delegate MediaDB.Backend.MediaFile 
+delegate MediaDB.Backend.MediaFile
          FileProcessor(MediaDB.Backend.CrawlerFile cf,
                        MediaDB.Backend.Indexer idx);
 
@@ -41,13 +40,13 @@ namespace MediaDB.Backend
 	/// </summary>
 	public class Indexer
 	{
-    public static int TOTAL_FILES = 0;
-    public static int FILES_DONE = 0;
+		public static int TOTAL_FILES = 0;
+		public static int FILES_DONE = 0;
 
 		/// <summary>
 		/// The root path
 		/// </summary>
-		public string Path { get; private set; }
+		public BasePath Path { get; private set; }
 
 		/// <summary>
 		/// Array of found files
@@ -70,22 +69,22 @@ namespace MediaDB.Backend
 		/// <param name="path">
 		/// A <see cref="System.String"/>
 		/// </param>
-		public Indexer(string path)
+		public Indexer(BasePath path)
 		{
 			Path = path;
 			if (Manager.Threads > 0)
 				slots = Manager.Threads;
 
-      Files = new ArrayList();
+			Files = new ArrayList();
 
-      Log.File("\n+++ Starting crawler in {0} +++\n", Path);
+			Log.Debug("\n>>> Starting crawler in {0}\n", Path.Name);
 
-      crawl(Path);
+			crawl(Path.Name);
 
-      Log.File("--- Found {0} files in {1} ---\n",
-               Files.Count, Path);
+			Log.Debug("<<< Found {0} files in {1}\n",
+			          Files.Count, Path.Name);
 
-      TOTAL_FILES += Files.Count;
+			TOTAL_FILES += Files.Count;
 		}
 
 		/// <summary>
@@ -93,18 +92,21 @@ namespace MediaDB.Backend
 		/// </summary>
 		public void FreeSlot()
 		{
-      //lock (this) {
-        FILES_DONE++;
-        Log.Debug("    +++++ {0} of {1} ({2}%) done!\n",
-                  FILES_DONE, TOTAL_FILES,
-                  Math.Floor(((double)FILES_DONE/(double)TOTAL_FILES)*100));
-        taken--;
+			// TODO: Haven't figured out if this lock is needed. Had some random
+			// crashes before which seems to have gone away. Haven't proven this
+			// lock has anything to do with that though...
+			lock (this) {
+				FILES_DONE++;
+				Log.Debug("    +++++ {0,5} of {1} ({2,3}%) done!\n",
+				          FILES_DONE, TOTAL_FILES,
+				          Math.Floor(((double)FILES_DONE/(double)TOTAL_FILES)*100));
+				taken--;
 
 				if (FILES_DONE == TOTAL_FILES) {
 					Files.Clear();
 					Files = new ArrayList();
 				}
-      //};
+			}
 		}
 
 		/// <summary>
@@ -112,16 +114,11 @@ namespace MediaDB.Backend
 		/// </summary>
 		public void Start()
 		{
-			if (!Tools.DirectoryExists(Path)) {
-				Log.Warning("File {0} doesn't exist or isn't a directory!\n", Path);
-				return;
-			}
-
-      Log.File("\n+++ Starting indexer in {0} +++\n", Path);
+			Log.Debug("\n$$$ Starting indexer in {0} +++\n", Path.Name);
 
 			foreach (CrawlerFile cf in Files) {
 				while (taken >= slots)
-					System.Threading.Thread.Sleep(400);
+					System.Threading.Thread.Sleep(300);
 
 				taken++;
 				FileProcessor fproc = Processor;
@@ -159,9 +156,10 @@ namespace MediaDB.Backend
 			FileHandler h = null;
 			switch (cf.MediaType.Mimetype)
 			{
+				case "image/bmp":
 				case "image/jpeg":
 				case "image/tiff":
-        case "image/gif":
+				case "image/gif":
 				case "image/png":
 					h = new IMGHandler(cf.File, cf.MediaType);
 					((IMGHandler)h).Process();
@@ -204,7 +202,7 @@ namespace MediaDB.Backend
 				foreach (FileInfo file in dir.GetFiles()) {
 					MediaType mt;
 					if ((mt = Manager.GetMediaType(file)) != null)
-						Files.Add(new CrawlerFile(file, mt));
+						Files.Add(new CrawlerFile(file, mt, Path));
 				}
 			}
 			catch (Exception e) {
@@ -237,6 +235,11 @@ namespace MediaDB.Backend
 		public MediaType MediaType;
 
 		/// <summary>
+		/// The basepath this file recides in
+		/// </summary>
+		public BasePath BasePath;
+
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="file">
@@ -245,10 +248,11 @@ namespace MediaDB.Backend
 		/// <param name="mediatype">
 		/// A <see cref="MediaType"/>
 		/// </param>
-		public CrawlerFile(FileInfo file, MediaType mediatype)
+		public CrawlerFile(FileInfo file, MediaType mediatype, BasePath basepath)
 		{
 			File = file;
 			MediaType = mediatype;
+			BasePath = basepath;
 		}
 	}
 }

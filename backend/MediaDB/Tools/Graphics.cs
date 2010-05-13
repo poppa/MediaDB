@@ -21,76 +21,78 @@
 
 using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Xml;
 
 namespace MediaDB
 {
-  /// <summary>
-  /// Various graphics related methods
-  /// </summary>
-  class Gfx
-  {
-    /// <summary>
-    /// Scale with constraint proportions
-    /// </summary>
-    /// <param name="org_x"></param>
-    /// <param name="org_y"></param>
-    /// <param name="max_x"></param>
-    /// <param name="max_y"></param>
-    /// <returns></returns>
-    public static int[] GetConstraints(int org_x, int org_y, 
-                                       int max_x, int max_y)
-    {
-      int[] r = new int[2];
-      float s = Math.Min((float)max_x / (float)org_x, 
-                         (float)max_y / (float)org_y);
-      r[0] = (int)Math.Round(s * org_x);
-      r[1] = (int)Math.Round(s * org_y);
+	/// <summary>
+	/// Various graphics related methods
+	/// </summary>
+	class Gfx
+	{
+		/// <summary>
+		/// Scale with constraint proportions
+		/// </summary>
+		/// <param name="org_x"></param>
+		/// <param name="org_y"></param>
+		/// <param name="max_x"></param>
+		/// <param name="max_y"></param>
+		/// <returns></returns>
+		public static int[] GetConstraints(int org_x, int org_y,
+		                                   int max_x, int max_y)
+		{
+			int[] r = new int[2];
+			float s = Math.Min((float)max_x / (float)org_x,
+			                   (float)max_y / (float)org_y);
+			r[0] = (int)Math.Round(s * org_x);
+			r[1] = (int)Math.Round(s * org_y);
 
-      return r;
-    }
+			return r;
+		}
 
-    /// <summary>
-    /// Scale image to <paramref name="width"/> and <paramref name="height"/>
-    /// </summary>
-    /// <param name="img"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <returns></returns>
-    public static Bitmap ScaleImage(Bitmap img, int width, int height)
-    {
-      Bitmap bmp = new Bitmap(img, width, height);
-      bmp.SetResolution(72, 72);
-      Graphics g = Graphics.FromImage(bmp);
-      g.InterpolationMode = 
-        System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-      g.DrawImage(img,
-                  new Rectangle(0, 0, width, height),
-                  new Rectangle(0, 0, img.Width, img.Height),
-                  GraphicsUnit.Pixel);
+		/// <summary>
+		/// Scale image to <paramref name="width"/> and <paramref name="height"/>
+		/// </summary>
+		/// <param name="img"></param>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <returns></returns>
+		public static Bitmap ScaleImage(Bitmap img, int width, int height)
+		{
+			Bitmap bmp = new Bitmap(img, width, height);
+			bmp.SetResolution(72, 72);
+			Graphics g = Graphics.FromImage(bmp);
+			g.InterpolationMode =
+			System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+			g.DrawImage(img,
+			            new Rectangle(0, 0, width, height),
+			            new Rectangle(0, 0, img.Width, img.Height),
+			            GraphicsUnit.Pixel);
 
-      g.Dispose();
-      g = null;
-      return bmp;
-    }
+			g.Dispose();
+			g = null;
+			return bmp;
+		}
 
-    /// <summary>
-    /// Returns a <see cref="ImageCodecInfo"/> info for
-    /// <paramref name="mimetype"/> that can be used for compression settings.
-    /// </summary>
-    /// <param name="mimetype"></param>
-    /// <returns></returns>
-    public static ImageCodecInfo GetEncoderInfo(string mimetype)
-    {
-      foreach (ImageCodecInfo ici in ImageCodecInfo.GetImageDecoders()) {
-        if (ici.MimeType == mimetype)
-          return ici;
-      }
+		/// <summary>
+		/// Returns a <see cref="ImageCodecInfo"/> info for
+		/// <paramref name="mimetype"/> that can be used for compression settings.
+		/// </summary>
+		/// <param name="mimetype"></param>
+		/// <returns></returns>
+		public static ImageCodecInfo GetEncoderInfo(string mimetype)
+		{
+			foreach (ImageCodecInfo ici in ImageCodecInfo.GetImageDecoders()) {
+			if (ici.MimeType == mimetype)
+				return ici;
+			}
 
-      return null;
+			return null;
 		}
 
 		/// <summary>
@@ -181,6 +183,80 @@ namespace MediaDB
 			proc = null;
 
 			return null;
+		}
+
+		/// <summary>
+		/// Retrieves metadata from an SVG file
+		/// </summary>
+		/// <param name="svg">
+		/// A <see cref="XmlNode"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="Hashtable"/>
+		/// </returns>
+		public static Hashtable SvgMetadata(XmlNode svg)
+		{
+			XmlNode md = null;
+			foreach (XmlNode c in svg.ChildNodes) {
+				if (c.Name == "metadata") {
+					md = c;
+					break;
+				}
+			}
+
+			Hashtable ht = new Hashtable();
+
+			if (md == null)
+				return ht;
+
+			XmlNode work = XML.FindNode("Work", md);
+
+			if (work != null) {
+				XmlNode n;
+
+				string xpath =
+					"*[local-name() = 'title' or local-name() = 'creator' or"  +
+					"  local-name() = 'rights' or local-name() = 'subject' or" +
+					"  local-name() = 'description']";
+
+				XmlNodeList l = work.SelectNodes(xpath);
+
+				foreach (XmlNode hit in l) {
+					switch (hit.LocalName) {
+						case "title":
+							ht.Add("title", hit.FirstChild.Value);
+							break;
+
+						case "description":
+							ht.Add("description", hit.FirstChild.Value);
+							break;
+
+						case "creator":
+							if ((n = XML.FindNode("title", hit)) != null)
+								ht.Add("author", n.FirstChild.Value);
+							break;
+
+						case "rights":
+							if ((n = XML.FindNode("title", hit)) != null)
+								ht.Add("copyright", n.FirstChild.Value);
+							break;
+
+						case "subject":
+							ArrayList s = new ArrayList();
+							if ((n = XML.FindNode("Bag", hit)) != null) {
+								foreach (XmlNode li in n)
+									if (li.LocalName == "li")
+										s.Add(li.FirstChild.Value);
+
+								ht.Add("keywords",
+								       String.Join(",", (string[])s.ToArray(typeof(string))));
+							}
+							break;
+					}
+				}
+			}
+
+			return ht;
 		}
 	}
 }
