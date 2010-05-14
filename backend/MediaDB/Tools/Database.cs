@@ -46,8 +46,8 @@ namespace MediaDB
 		/// <param name="args"></param>
 		/// <returns></returns>
 		public static bool QueryReader(out MySqlDataReader rd,
-					       string sql,
-					       params MySqlParameter[] args)
+		                               string sql,
+		                               params MySqlParameter[] args)
 		{
 			try {
 				MySqlCommand cmd = Manager.DbCon.CreateCommand();
@@ -88,7 +88,7 @@ namespace MediaDB
 		/// A <see cref="System.Boolean"/>
 		/// </returns>
 		public static bool QueryInsert(out long id, string sql,
-					       params MySqlParameter[] args)
+		                               params MySqlParameter[] args)
 		{
 			try {
 				MySqlCommand cmd = Manager.DbCon.CreateCommand();

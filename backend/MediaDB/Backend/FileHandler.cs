@@ -37,7 +37,7 @@ namespace MediaDB.Backend
 	/// <summary>
 	/// Base handler class
 	/// </summary>
-	public class FileHandler
+	public class FileHandler : IDisposable
 	{
 		/// <summary>
 		/// The real file object
@@ -70,6 +70,17 @@ namespace MediaDB.Backend
 		}
 
 		/// <summary>
+		/// Disposes this object
+		/// </summary>
+		public void Dispose()
+		{
+			File = null;
+			MediaType = null;
+			MediaFile.Dispose();
+			MediaFile = null;
+		}
+
+		/// <summary>
 		/// Process the file. Collects various info about the file.
 		/// Override this in subclasses to extract file specific info.
 		/// </summary>
@@ -79,11 +90,13 @@ namespace MediaDB.Backend
 				MediaFile = new MediaFile();
 				MediaFile.Name = File.Name;
 				MediaFile.FullName = File.FullName;
-				MediaFile.DirName = File.Directory.FullName;
 				MediaFile.Size = File.Length;
 				MediaFile.Created = File.CreationTime;
 				MediaFile.Modified = File.LastWriteTime;
 				MediaFile.Mimetype = MediaType.Mimetype;
+				Directory dir = Manager.GetDirectory(File.Directory.FullName);
+				if (dir != null)
+					MediaFile.DirectoryId = dir.Id;
 			}
 		}
 
@@ -128,9 +141,9 @@ namespace MediaDB.Backend
 			eparams = null;
 			ici = null;
 			fmt = null;
-			img.Dispose();
-			img = null;
 		}
+
+		bool orgIsScaled = false;
 
 		/// <summary>
 		/// Generates a preview image and populates a new
@@ -153,30 +166,30 @@ namespace MediaDB.Backend
 			int[] c = Gfx.GetConstraints(MediaFile.Width, MediaFile.Height,
 			                             p.Width, p.Height);
 
-			Bitmap n = Gfx.ScaleImage(img, c[0], c[1]);
-			MemoryStream s = new MemoryStream();
+			using (Bitmap n = Gfx.ScaleImage(img, c[0], c[1])) {
+				if (!orgIsScaled) {
+					img = (Bitmap)n.Clone();
+					orgIsScaled = true;
+				}
 
-			if (ici != null)
-				n.Save(s, ici, eparams);
-			else
-				n.Save(s, fmt);
+				using (MemoryStream s = new MemoryStream()) {
+					if (ici != null)
+						n.Save(s, ici, eparams);
+					else
+						n.Save(s, fmt);
 
-			PreviewFile pf = new PreviewFile();
-			pf.Width = n.Width;
-			pf.Height = n.Height;
-			pf.Size = s.Length;
-			pf.Mimetype = mime;
-			pf.Name = p.Name;
-			pf.Data = s.ToArray();
+					PreviewFile pf = new PreviewFile();
+					pf.Width = n.Width;
+					pf.Height = n.Height;
+					pf.Size = s.Length;
+					pf.Mimetype = mime;
+					pf.Name = p.Name;
+					pf.Data = s.ToArray();
 
-			s.Close();
-			s.Dispose();
-			s = null;
-
-			n.Dispose();
-			n = null;
-
-			return pf;
+					s.Close();
+					return pf;
+				}
+			}
 		}
 
 		/// <summary>
@@ -191,16 +204,12 @@ namespace MediaDB.Backend
 			mimetype = "image/jpeg";
 
 			switch (MediaType.Mimetype) {
+				case "image/gif":
 				case "image/png":
 				case "image/x-eps":
 				case "image/svg+xml":
 					fmt = ImageFormat.Png;
 					mimetype = "image/png";
-					break;
-
-				case "image/gif":
-					fmt = ImageFormat.Gif;
-					mimetype = "image/gif";
 					break;
 			}
 		}
@@ -216,7 +225,14 @@ namespace MediaDB.Backend
 		{
 			// TODO: Add more logic...
 			if (MediaFile.Id > 0) {
-				return false;
+				/*
+				if (MediaFile.Sha1Hash == Tools.ComputeFileHash(MediaFile.FullName))
+					return false;
+				*/
+				if (MediaFile.Modified == File.LastWriteTime)
+					return false;
+
+				MediaFile.Modified = File.LastWriteTime;
 			}
 
 			return true;

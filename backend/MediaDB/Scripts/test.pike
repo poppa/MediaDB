@@ -1,4 +1,4 @@
-#!/usr/local/bin/pike
+#!/usr/bin/env pike
 
 string constr = "mysql://webuser:ResubeW@localhost/mediadb";
 Sql.Sql db = Sql.Sql(constr);
@@ -12,74 +12,48 @@ int main(int argc, array(string) argv)
   foreach (r, mapping path)
     base_paths[(int)path->id] = path->path;
 
-  string path;
-  int base = 0;
+  int dir_id = 0;
 
-  if (argc > 1) {
-    sscanf(argv[1], "%d:%s", base, path);
-  }
+  if (argc > 1)
+    dir_id = (int)argv[1];
 
-  if (path)
-    path = normalize_path(path);
-
-  build_tree(base, path);
+  array a = ({});
+  a = fetch_tree(dir_id, a);
+  
+  werror("%O\n", reverse(a));
+  //build_tree(dir_id);
 
   return 0;
 }
 
-string normalize_path(string p)
+void build_tree(int id)
 {
-  if (!p || !sizeof(p))
-    return 0;
-
-  p = replace(p, "//", "/");
-  if (p[-1] == '/')
-    p = p[0..sizeof(p)-2];
-  if (sizeof(p) && p[0] == '/')
-    p = p[1..];
-
-  return p;
-}
-
-string build_tree(int root, string path)
-{
-  string fullpath = base_paths[root];
-  if (fullpath && path)
-    fullpath += "/" + path;
-  
-  werror("$$$ Full path: %s\n", fullpath||"");
-  
-  foreach (base_paths; int id; string dir) {
-
-    write("* %s\n", basename(dir));
-
-    if (id == root && fullpath) {
-      int ind = 1;
-      foreach (((path||"")/"/")-({""}), string p)
-      	write("%s* %s\n", " "*(ind++*2), p);
-      
-      if (fullpath) {
-      	string pad = " "*(ind*2);
-      	get_dirs(fullpath);
-      	foreach (get_files(fullpath), mapping m) {
-      	  write("%s1- %s\n", pad, m->name);
-      	}
-      }
-    }
+  foreach (base_paths; int dir_id; string path) {
+    write("* %s\n", basename(path));
+    if (id == dir_id) 
+      low_build_tree(id, 1);
   }
 }
 
-array(string) get_dirs(string path)
+void low_build_tree(int id, int indent)
 {
-  werror("Get dirs for: %s\n", path);
-  string sql = "SELECT * FROM file WHERE dirname REGEXP '"+DB.Sql.quote(path)+"/.[^/]*$' "
-               "GROUP BY dirname";
-  array r = db->query(sql, path);
-  werror("%O\n", r->dirname);
+  string pad = " "*(indent*2);
+  write("%s* Open...\n", pad);
+  array a = ({});
+  a = fetch_tree(id, a);
+  
+  write("%O\n", a);
 }
 
-array(mapping) get_files(string path)
+array fetch_tree(int id, array paths)
 {
-  string sql = "SELECT * FROM file WHERE dirname=%s";
-  return db->query(sql, path);
+  string sql = "SELECT * FROM `directory` WHERE id=%d";
+  array r = db->query(sql, id);
+  if (r && sizeof(r)) {
+    paths += ({ r[0] });
+    if ((int)r[0]->parent_id > 0)
+      return fetch_tree((int)r[0]->parent_id, paths);
+  }
+
+  return paths;
 }

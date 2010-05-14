@@ -23,25 +23,120 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using MediaDB.Backend;
 
 /// <summary>
 /// Async method template for processing a file
 /// </summary>
 delegate MediaDB.Backend.MediaFile
-         FileProcessor(MediaDB.Backend.CrawlerFile cf,
-                       MediaDB.Backend.Indexer idx);
+         FileProcessor(MediaDB.Backend.CrawlerFile cf);
 
 namespace MediaDB.Backend
 {
 	/// <summary>
+	/// Container class for <see cref="Indexer"/>s
+	/// </summary>
+	public class Scanner : IDisposable
+	{
+		/// <summary>
+		/// Total number of files collected
+		/// </summary>
+		public int TotalFiles { get; private set; }
+
+		/// <summary>
+		/// Number of files processed
+		/// </summary>
+		public int FilesDone { get; private set; }
+
+		/// <summary>
+		/// List of <see cref="Indexer"/>s
+		/// </summary>
+		private List<Indexer> indexers = new List<Indexer>();
+
+		/// <summary>
+		/// Starts a scanning/indexing session in <paramref name="paths"/>
+		/// </summary>
+		/// <param name="paths">
+		/// A <see cref="List<BasePath>"/>
+		/// </param>
+		public static void Scan(List<BasePath> paths)
+		{
+			DateTime now = DateTime.Now;
+
+			Console.Write("\n::: Starting scanner pass: {0}\n", now);
+
+			Scanner scanner = new Scanner(paths);
+			Console.Write("::: Collected {0} files,", scanner.TotalFiles);
+			Console.Write(" starting indexer...\n\n");
+			scanner.Run();
+
+			while (scanner.FilesDone < scanner.TotalFiles)
+				Thread.Sleep(50);
+
+			Console.Write("\n::: Scanning took: {0}\n", DateTime.Now - now);
+
+			scanner.Dispose();
+		}
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="paths">
+		/// A <see cref="List<BasePath>"/>
+		/// </param>
+		public Scanner(List<BasePath> paths)
+		{
+			foreach (BasePath p in paths) {
+				var idx = new Indexer(p, this);
+				indexers.Add(idx);
+				TotalFiles += idx.Files.Count;
+			}
+		}
+
+		/// <summary>
+		/// Start indexing
+		/// </summary>
+		public void Run()
+		{
+			foreach (Indexer idx in indexers)
+				idx.Start();
+		}
+
+		/// <summary>
+		/// Called from a <see cref="Indexer"/> when a file has been processed
+		/// </summary>
+		public void NotifyDone()
+		{
+			FilesDone++;
+			Log.Debug("+++ {0,5} of {1} ({2,3}%) done!\n",
+			          FilesDone, TotalFiles,
+			          Math.Floor(((double)FilesDone/(double)TotalFiles)*100));
+			if (FilesDone == TotalFiles) {
+				// We're really done!
+			}
+		}
+
+		/// <summary>
+		/// Disposes this object
+		/// </summary>
+		public void Dispose()
+		{
+			foreach (Indexer idx in indexers)
+				idx.Dispose();
+
+			indexers.Clear();
+			indexers = null;
+		}
+	}
+
+	/// <summary>
 	/// Class for indexing a directory path. Scans recursively through the
 	/// directory.
 	/// </summary>
-	public class Indexer
+	internal class Indexer : IDisposable
 	{
-		public static int TOTAL_FILES = 0;
-		public static int FILES_DONE = 0;
+		//private static readonly object threadlock = new Object();
 
 		/// <summary>
 		/// The root path
@@ -54,9 +149,14 @@ namespace MediaDB.Backend
 		public ArrayList Files { get; private set; }
 
 		/// <summary>
+		/// List of collected directories
+		/// </summary>
+		public List<Directory> Directories { get; private set; }
+
+		/// <summary>
 		/// Number of concurrent threads to use
 		/// </summary>
-		private int slots = 15;
+		private int slots = 5;
 
 		/// <summary>
 		/// Number of used threads
@@ -64,48 +164,57 @@ namespace MediaDB.Backend
 		private int taken = 0;
 
 		/// <summary>
+		/// The scanner object owning this object
+		/// </summary>
+		private Scanner scanner;
+
+		/// <summary>
 		/// Contructor
 		/// </summary>
 		/// <param name="path">
 		/// A <see cref="System.String"/>
 		/// </param>
-		public Indexer(BasePath path)
+		public Indexer(BasePath path, Scanner scanner)
 		{
+			this.scanner = scanner;
 			Path = path;
 			if (Manager.Threads > 0)
 				slots = Manager.Threads;
 
 			Files = new ArrayList();
+			Directories = new List<Directory>();
 
-			Log.Debug("\n>>> Starting crawler in {0}\n", Path.Name);
+			Directory d;
+			if ((d = Manager.GetDirectory(Path.Name)) == null) {
+				d = new Directory();
+				d.Name = "";
+				d.ShortName = "";
+				d.FullName = Path.Name;
+				d.BasePathId = Path.Id;
+				if (d.Save())
+					Manager.Directories.Add(d);
+				else {
+					Log.Warning("Unable to save root dir {0} to directories!\n",
+										  Path.Name);
+				}
+			}
+
+			Directories.Add(d);
 
 			crawl(Path.Name);
-
-			Log.Debug("<<< Found {0} files in {1}\n",
-			          Files.Count, Path.Name);
-
-			TOTAL_FILES += Files.Count;
 		}
 
 		/// <summary>
 		/// Frees a slot for a thread
 		/// </summary>
-		public void FreeSlot()
+		private void freeSlot()
 		{
 			// TODO: Haven't figured out if this lock is needed. Had some random
 			// crashes before which seems to have gone away. Haven't proven this
 			// lock has anything to do with that though...
 			lock (this) {
-				FILES_DONE++;
-				Log.Debug("    +++++ {0,5} of {1} ({2,3}%) done!\n",
-				          FILES_DONE, TOTAL_FILES,
-				          Math.Floor(((double)FILES_DONE/(double)TOTAL_FILES)*100));
+				scanner.NotifyDone();
 				taken--;
-
-				if (FILES_DONE == TOTAL_FILES) {
-					Files.Clear();
-					Files = new ArrayList();
-				}
 			}
 		}
 
@@ -114,30 +223,22 @@ namespace MediaDB.Backend
 		/// </summary>
 		public void Start()
 		{
-			Log.Debug("\n$$$ Starting indexer in {0} +++\n", Path.Name);
-
 			foreach (CrawlerFile cf in Files) {
 				while (taken >= slots)
 					System.Threading.Thread.Sleep(300);
 
 				taken++;
 				FileProcessor fproc = Processor;
-				fproc.BeginInvoke(cf, this, onProcess, fproc);
+				fproc.BeginInvoke(cf, onProcess, fproc);
 			}
 		}
 
 		/// <summary>
 		/// Callback for when a file has been processed
 		/// </summary>
-		private static void onProcess(IAsyncResult syncr)
+		private void onProcess(IAsyncResult syncr)
 		{
-			FileProcessor fproc = (FileProcessor)syncr.AsyncState;
-			//MediaFile mf = (MediaFile)fproc.EndInvoke(syncr);
-			fproc.EndInvoke(syncr);
-			//Log.Debug("<<< Process done: {0}\n", mf.FullName);
-			fproc = null;
-			syncr = null;
-			//mf = null;
+			freeSlot();
 		}
 
 		/// <summary>
@@ -149,7 +250,7 @@ namespace MediaDB.Backend
 		/// <returns>
 		/// A <see cref="System.Boolean"/>
 		/// </returns>
-		private static MediaFile Processor(CrawlerFile cf, Indexer idx)
+		private MediaFile Processor(CrawlerFile cf)
 		{
 			//Log.Debug(">>> Process file: {0}\n", cf.File.FullName);
 
@@ -182,10 +283,49 @@ namespace MediaDB.Backend
 			}
 
 			cf = null;
-			idx.FreeSlot();
 			MediaFile m = h.MediaFile;
+			h.Dispose();
 			h = null;
 			return m;
+		}
+
+		/// <summary>
+		/// Disposes the object
+		/// </summary>
+		public void Dispose()
+		{
+			Path = null;
+
+			Files.Clear();
+			Files = null;
+
+			Directories.Clear();
+			Directories = null;
+		}
+
+		/// <summary>
+		/// Finds the parent firectory for <paramref name="dir"/>
+		/// </summary>
+		/// <param name="dir"></param>
+		/// <returns></returns>
+		private Directory findParentDirectory(DirectoryInfo dir)
+		{
+			string pp = dir.Parent.FullName;
+			return Directories.Find(delegate(Directory d)
+			{
+				return d.FullName == pp;
+			});
+		}
+
+		/// <summary>
+		/// Returns the directory name of <paramref name="path"/>
+		/// minus the the base path
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		private string getDirectoryShortName(string path)
+		{
+			return path.Substring(Path.Name.Length + 1);
 		}
 
 		/// <summary>
@@ -210,8 +350,30 @@ namespace MediaDB.Backend
 			}
 
 			try {
-				foreach (DirectoryInfo sub in dir.GetDirectories())
+				foreach (DirectoryInfo sub in dir.GetDirectories()) {
+					string shortName = getDirectoryShortName(sub.FullName);
+					Directory d = Manager.GetDirectory(sub.FullName);
+					if (d == null) {
+						d = new Directory();
+						d.FullName = sub.FullName;
+						d.Name = sub.Name;
+						d.ShortName = shortName;
+						d.BasePathId = Path.Id;
+
+						Directory parent = findParentDirectory(sub);
+						if (parent != null)
+							d.ParentId = parent.Id;
+
+						if (d.Save())
+							Manager.Directories.Add(d);
+						else 
+							Log.Warning("Failed saving Directory\n", d.Id);
+					}
+
+					Directories.Add(d);
+
 					crawl(sub.FullName);
+				}
 			}
 			catch (Exception e) {
 				Log.Werror("Directory error: {0}\n", e.Message);

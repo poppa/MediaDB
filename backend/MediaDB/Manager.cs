@@ -62,6 +62,12 @@ namespace MediaDB
 		public static ArrayList Previews { get; private set; }
 
 		/// <summary>
+		/// List of directories
+		/// </summary>
+		public static List<MediaDB.Backend.Directory> 
+			Directories { get; set; }
+
+		/// <summary>
 		/// The width of the smallest preview template
 		/// </summary>
 		public static int PreviewMinWidth { get; private set; }
@@ -138,6 +144,8 @@ namespace MediaDB
 			}
 		}
 
+		public static List<string> FileIndex { get; set; }
+
 		/// <summary>
 		/// Read the config file and populate this class
 		/// </summary>
@@ -165,6 +173,8 @@ namespace MediaDB
 			Previews = new ArrayList();
 			DatabaseInfo = new DBInfo();
 			BasePaths = new List<BasePath>();
+			Directories = new List<MediaDB.Backend.Directory>();
+			FileIndex = new List<string>();
 
 			XmlDocument xdoc = new XmlDocument();
 			xdoc.Load(File);
@@ -245,14 +255,12 @@ namespace MediaDB
 			Previews.Sort();
 			Previews.Reverse();
 
-			dbstr = String.Format("server={0}; "    +
-			                      "database={1};"   +
-			                      "userid={2};"     +
-			                      "password={3};",
-			                      DatabaseInfo.Host,
-			                      DatabaseInfo.Name,
-			                      DatabaseInfo.Username,
-			                      DatabaseInfo.Password);
+			dbstr = String.Format("server={0};database={1};userid={2};password={3};",
+			                      DatabaseInfo.Host, DatabaseInfo.Name,
+			                      DatabaseInfo.Username, DatabaseInfo.Password);
+
+			Log.Debug(">>> Connecting to database...");
+
 			try {
 				dbcon = new MySqlConnection(dbstr);
 				dbcon.Open();
@@ -260,13 +268,17 @@ namespace MediaDB
 				DB.Query("TRUNCATE `file`");
 				DB.Query("TRUNCATE `preview`");
 #endif
+				Log.Debug("OK!\n");
 			}
 			catch (Exception e) {
-				Log.Werror("Unable to connect to database: {0}\n", e.Message);
+				Log.Debug("FAILED! ");
+				Log.Werror("{0}\n", e.Message);
 				return false;
 			}
 
 			MySqlDataReader mrd;
+
+			// Collect base paths from database
 			if (DB.QueryReader(out mrd, "SELECT * FROM base_path")) {
 				while (mrd.Read()) {
 					string p = mrd.GetString("path");
@@ -285,6 +297,7 @@ namespace MediaDB
 				DB.EndReader(ref mrd);
 			}
 
+			// Sync paths from config file with path from database
 			foreach (string path in basePaths) {
 				var t = BasePaths.Find(delegate(BasePath tp) {
 					return tp.Name == path;
@@ -306,7 +319,40 @@ namespace MediaDB
 				}
 			}
 
+			// Setup the directory list
+			if (DB.QueryReader(out mrd, "SELECT * FROM directory")) {
+				while (mrd.Read()) {
+					MediaDB.Backend.Directory d = MediaDB.Backend.Directory.FromSql(mrd);
+					Directories.Add(d);
+				}
+
+				DB.EndReader(ref mrd);
+			}
+
+			// Setup the list of files
+			if (DB.QueryReader(out mrd, "SELECT fullname FROM `file`")) {
+				while (mrd.Read())
+					FileIndex.Add(mrd.GetString("fullname"));
+
+				DB.EndReader(ref mrd);
+			}
+
+			filesCount = FileIndex.Count;
+
 			return true;
+		}
+
+		/// <summary>
+		/// Returns the directory object for <paramref name="path"/> if
+		/// it exists.
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public static MediaDB.Backend.Directory GetDirectory(string path)
+		{
+			return Directories.Find(delegate(MediaDB.Backend.Directory dd) {
+				return dd.FullName == path;
+			});
 		}
 
 		/// <summary>
@@ -340,32 +386,35 @@ namespace MediaDB
 			if (filesCount == 0) {
 				return null;
 			}
-			// This method is called from an async method in Indexer.cs.
-			// So lock during the DB call and release when db done.
-			mutex.WaitOne();
 
 			MediaFile mf = null;
-			MySqlDataReader r = null;
-			try {
-				string sql = "SELECT * FROM `file` WHERE fullname = @fn";
-				if (DB.QueryReader(out r, sql, DB.Param("fn", fullname))) {
-					if (r.HasRows) {
-						r.Read();
-						mf = new MediaFile();
-						mf.SetFromSql(r);
-						Log.Debug("   @@@ Found file {0} in database!\n", fullname);
-					}
+			if (FileIndex.Contains(fullname)) {
+				// This method is called from an async method in Indexer.cs.
+				// So lock during the DB call and release when db done.
+				mutex.WaitOne();
 
+				MySqlDataReader r = null;
+				try {
+					string sql = "SELECT * FROM `file` WHERE fullname = @fn";
+					if (DB.QueryReader(out r, sql, DB.Param("fn", fullname))) {
+						if (r.HasRows) {
+							r.Read();
+							mf = new MediaFile();
+							mf.SetFromSql(r);
+							//Log.Debug("   @@@ Found file {0} in database!\n", fullname);
+						}
+
+						DB.EndReader(ref r);
+					}
+				}
+				catch (Exception e) {
+					Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
 					DB.EndReader(ref r);
 				}
-			}
-			catch (Exception e) {
-				Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
-				DB.EndReader(ref r);
-			}
 
-			// Release the thread
-			mutex.ReleaseMutex();
+				// Release the thread
+				mutex.ReleaseMutex();
+			}
 
 			return mf;
 		}

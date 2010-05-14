@@ -108,7 +108,7 @@ namespace MediaDB
 		{
 			string tmp = Tools.TmpPath() + ".jpg";
 			string args = String.Format("-quality 80 -units PixelsPerInch " +
-			                            "-density 72x72 \"{0}[0]\" \"{1}\"",
+			                            "-density 72 \"{0}[0]\" \"{1}\"",
 			                            path, tmp);
 
 			return iMagickConvert(args, tmp);
@@ -147,16 +147,22 @@ namespace MediaDB
 		/// </returns>
 		private static byte[] iMagickConvert(string args, string outfile)
 		{
+			// TODO: Resolve the relative exe issue for Windows
 			System.Diagnostics.Process proc;
 			proc = new System.Diagnostics.Process();
 			proc.EnableRaisingEvents = false;
 #if LINUX
 			proc.StartInfo.FileName = "convert";
 #else
-			throw new Exception("$$$ Fix ImageMagick on Winblows as well");
+			proc.StartInfo.FileName = @"C:\Program Files\ImageMagick-6.6.1-Q16\convert.exe";
+			//proc.StartInfo.FileName = "\"convert.exe\"";
 #endif
 			proc.StartInfo.Arguments = args;
+			proc.StartInfo.UseShellExecute = false;
+			proc.StartInfo.RedirectStandardError = true;
 			proc.Start();
+
+			string error = proc.StandardError.ReadToEnd();
 
 			if (!proc.HasExited)
 				proc.WaitForExit();
@@ -176,6 +182,9 @@ namespace MediaDB
 				proc = null;
 
 				return buf;
+			}
+			else {
+				Log.Warning("Unable to \"convert\": {0}\n### {1}\n", args, error);
 			}
 
 			proc.Close();

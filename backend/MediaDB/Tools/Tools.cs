@@ -24,6 +24,7 @@ using System.IO;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Xml;
 
 namespace MediaDB
@@ -71,6 +72,32 @@ namespace MediaDB
 		public static bool DirectoryExists(string path)
 		{
 			return new DirectoryInfo(path).Exists;
+		}
+
+		//! TODO: This is ridicuosly slow on large files! Might need some other
+		//! way to solve file hashing.
+		/// <summary>
+		/// Compute a hash of the file content.
+		/// </summary>
+		/// <param name="file">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.String"/>
+		/// </returns>
+		public static string ComputeFileHash(string file)
+		{
+			if (!FileExists(file))
+				throw new FileNotFoundException("Can't compute hash", file);
+
+			using (SHA1 sha1 = new SHA1CryptoServiceProvider()) {
+				using (FileStream fs = new FileStream(file, FileMode.Open,
+																							FileAccess.Read))
+				{
+					return BitConverter.ToString(sha1.ComputeHash(fs))
+					                   .Replace("-", "");
+				}
+			}
 		}
 
 		/// <summary>
@@ -259,36 +286,6 @@ namespace MediaDB
 			Console.Write("[notice] {0}", format);
 		}
 
-		public static void Exception(params object[] args)
-		{
-			string s = null;
-			if (args.Length == 0)
-				return;
-			else if (args.Length == 1) {
-				Exception e = (Exception)args[0];
-				s = e.Message;
-#if DEBUG
-				s += "\n" +  e.StackTrace;
-#endif
-			}
-			else {
-				s = (string)args[0];
-				Exception e = (Exception)args[args.Length-1];
-				ArrayList al = new ArrayList(args.Length-1);
-				for (int i = 0; i < al.Count; i++)
-					al.Add(args[i]);
-				s = String.Format(s, al);
-				s += " " + e.Message;
-#if DEBUG
-				s += "\n" + e.StackTrace;
-#endif
-			}
-
-			Console.Write(s);
-		}
-
-		private static System.IO.TextWriter tw;
-
 		/// <summary>
 		/// Write to file
 		/// </summary>
@@ -298,23 +295,13 @@ namespace MediaDB
 		{
 			try {
 				if (rest.Length > 0) format = String.Format(format, rest);
-				if (tw == null) tw = new System.IO.StreamWriter(LogFile, true);
-				tw.Write(format);
+				StreamWriter s = new System.IO.StreamWriter(LogFile, true);
+				s.Write(format);
+				s.Close();
+				s.Dispose();
 			}
 			catch (Exception e) {
 				Log.Werror(e.Message);
-			}
-		}
-
-		/// <summary>
-		/// End the logger. Closes the file handler if it's been used
-		/// </summary>
-		public static void End()
-		{
-			if (tw != null) {
-				tw.Close();
-				tw.Dispose();
-				tw = null;
 			}
 		}
 	}

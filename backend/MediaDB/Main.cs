@@ -28,15 +28,30 @@ namespace MediaDB
 {
 	class MainClass
 	{
+		private const string HEADER =
+		"***********************************************************************\n"+
+		"* Starting MediaDB @ {0}                                               \n"+
+		"* ----------------------------                                         \n"+
+		"* Type EXIT or QUIT to kill the applicaion at any time.                \n"+
+		"*********************************************************************\n\n";
+
+		/// <summary>
+		/// Main entry point
+		/// </summary>
+		/// <param name="args">
+		/// A <see cref="System.String[]"/>
+		/// </param>
 		public static void Main (string[] args)
 		{
 			DateTime start = DateTime.Now;
+			Console.Clear();
+			Console.Write(HEADER, start);
+
 #if DEBUG
 #if LINUX
-			Log.Debug("=== DEBUG/LINUX MODE ===\n");
 			var t = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-			Log.LogFile = Tools.BuildPath(t,"temp","mediadb.log");
-			string cfg = "/home/pontus/temp/config.xml";
+			Log.LogFile = t + "/temp/mediadb.log";
+			string cfg  = "/home/pontus/temp/config.xml";
 #else
 			Log.LogFile = Path.Combine(@"\tmp", "mediadb.log");
 			string cfg = @"\tmp\config.xml";
@@ -45,37 +60,86 @@ namespace MediaDB
 			string cfg = args[1];
 #endif
 
-			if (Manager.Init(cfg)) {
-				ArrayList idx = new ArrayList();
-				foreach (BasePath path in Manager.BasePaths)
-					idx.Add(new Backend.Indexer(path));
-
-				foreach (Backend.Indexer i in idx)
-					i.Start();
+			if (!Manager.Init(cfg)) {
+				Log.Werror("Error starting application!\n");
+				Environment.Exit(1);
 			}
 
-			Log.End();
-
-			Log.Debug(" # {0}\n", DateTime.Now - start);
-
-			/*
-			Console.Write("\n----\nHit any key to exit!\n");*/
-			Console.ReadLine();
-			Console.Write("--- Bye bye\n");
-
-			//Thread backend = new Thread(new ThreadStart(MainLoop));
-			//backend.Start();
-			//backend.Join();
-
+			StartWorker();
+			MainLoop();
 			Manager.Dispose();
-
 			Environment.Exit(0);
 		}
 
+		/// <summary>
+		/// The background worker
+		/// </summary>
+		private static System.ComponentModel.BackgroundWorker worker;
+
+		/// <summary>
+		/// Is the current worker done or not.
+		/// </summary>
+		private static bool workerCompleted = false;
+
+		/// <summary>
+		/// Starts the backgrpund worker thread for a scanning pass
+		/// </summary>
+		public static void StartWorker()
+		{
+			workerCompleted = false;
+
+			if (worker != null) {
+				worker.Dispose();
+				worker = null;
+			}
+
+			worker = new System.ComponentModel.BackgroundWorker();
+			worker.WorkerReportsProgress = false;
+			worker.WorkerSupportsCancellation = false;
+
+			worker.DoWork += (sender, args) =>
+			{
+				Backend.Scanner.Scan(Manager.BasePaths);
+			};
+
+			worker.RunWorkerCompleted += (sender, args) =>
+			{
+				workerCompleted = true;
+			};
+
+			worker.RunWorkerAsync();
+		}
+
+		/// <summary>
+		/// Enter the MainLoop
+		/// </summary>
 		public static void MainLoop()
 		{
 			while (true) {
 				Thread.Sleep(100);
+				string x = Console.ReadLine();
+				if (!String.IsNullOrEmpty(x)) {
+					switch (x.ToLowerInvariant())
+					{
+						case "index":
+							if (!workerCompleted) {
+								Log.Warning("A worker is still running. Wait for it to quit!\n");
+							}
+							else
+								StartWorker();
+							break;
+
+						case "clear":
+							Console.Clear();
+							break;
+
+						case "quit":
+						case "exit":
+							Console.Write("------\nBye Bye!\n");
+							Environment.Exit(0);
+							break;
+					}
+				}
 			}
 		}
 	}
