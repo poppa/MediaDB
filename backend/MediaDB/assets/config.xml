@@ -4,11 +4,19 @@
 	     NOTE! Keep this sane. A too large number can easily fill the
 	     memory to its brim.
 	-->
-	<threads>10</threads>
+	<threads>5</threads>
+	
+	<!-- Max bytes
+	     Maximum number of megabytes the application can allocate during 
+	     indexing.
+
+	     NOTE! The application can exceed this slightly depending on the
+	     file size of the next file in the queue.
+	-->
+	<maxbytes>300</maxbytes>
 
 	<!-- Paths
 	     Root paths that should be scanned for files.
-	     NOTE! Use backslashes on Windows
 	-->
 	<paths>
 	  <path>/some/path</path>
@@ -25,22 +33,22 @@
 		<host>localhost</host>
 		<database>mediadb</database>
 		<username>root</username>
-		<password>secret-password</password>
+		<password>****</password>
 	</database>
 
 	<!-- Mediatypes
 	     A media type is a mapping of an extension to a mimetype.
 	     This will determine what handler will be used when the file is
-	     processed.
+	     processed. 
 	-->
 	<mediatypes>
-		<mediatype extension=".jpg,.jpeg"  mimetype="image/jpeg" />
-		<mediatype extension=".tif,.tiff"  mimetype="image/tiff" />
-		<mediatype extension=".png"  mimetype="image/png" />
-		<mediatype extension=".gif"  mimetype="image/gif" />
-		<mediatype extension=".svg"  mimetype="image/svg+xml" />
-		<mediatype extension=".pdf"  mimetype="application/pdf" />
-		<mediatype extension=".eps"  mimetype="image/x-eps" />
+		<mediatype extension=".jpg,.jpeg" mimetype="image/jpeg" />
+		<mediatype extension=".tif,.tiff" mimetype="image/tiff" />
+		<mediatype extension=".png" mimetype="image/png" />
+		<mediatype extension=".gif" mimetype="image/gif" />
+		<mediatype extension=".svg" mimetype="image/svg+xml" />
+		<mediatype extension=".pdf" mimetype="application/pdf" />
+		<mediatype extension=".eps,ai" mimetype="image/x-eps" />
 	</mediatypes>
 
 	<!-- Previews 
@@ -50,7 +58,8 @@
 	     constrained proportions. The name attribute is arbitrary and will be
 	     put in the record in the preview database table
 	-->
-	<previews>
+	<previews quality="90">
+		<preview width="800" height="600" name="web" />
 		<preview width="480" height="320" name="medium" />
 		<preview width="240" height="180" name="small" />
 	</previews>

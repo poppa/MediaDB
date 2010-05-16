@@ -144,6 +144,14 @@ namespace MediaDB
 			}
 		}
 
+		/// <summary>
+		/// Max number of bytes the application can consume during indexing
+		/// </summary>
+		public static long MaxBytes { get; private set; }
+
+		/// <summary>
+		/// List of all files
+		/// </summary>
 		public static List<string> FileIndex { get; set; }
 
 		/// <summary>
@@ -221,6 +229,10 @@ namespace MediaDB
 								MediaTypes.Add(mt);
 							}
 						}
+						break;
+
+					case "maxbytes":
+						MaxBytes = (1024*1024)*long.Parse(child.FirstChild.Value);
 						break;
 
 					case "previews":
@@ -304,7 +316,7 @@ namespace MediaDB
 				});
 				if (t == null) {
 					if (!Tools.DirectoryExists(path)) {
-						Log.Warning("Path \"{0}\" in config file doesn't exits on file " +
+						Log.Warning("Path \"{0}\" in config file doesn't exits in file " +
 						            "system!\n");
 					}
 					else {

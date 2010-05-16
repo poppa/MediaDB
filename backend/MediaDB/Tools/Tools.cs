@@ -130,6 +130,15 @@ namespace MediaDB
 			return String.Join(DIR_SEPARATOR_S, parts);
 		}
 
+		/// <summary>
+		/// ISO-8859-1 encode string <paramref name="s"/>
+		/// </summary>
+		/// <param name="s">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.String"/>
+		/// </returns>
 		public static string IsoEncode(string s)
 		{
 			try {
@@ -140,6 +149,33 @@ namespace MediaDB
 			}
 
 			return s;
+		}
+
+		/// <summary>
+		/// String representation of <paramref name="bytes"/>
+		/// </summary>
+		/// <param name="bytes">
+		/// A <see cref="System.Int64"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.String"/>
+		/// </returns>
+		public static string FormatBytes(long bytes)
+		{
+		  const int scale = 1024;
+		  string[] orders = { "GB", "MB", "KB", "Bytes" };
+		  long max = (long)Math.Pow(scale, orders.Length - 1);
+
+		  foreach (string order in orders)
+		  {
+		    if (bytes > max) {
+		      return string.Format("{0:##.##} {1}", decimal.Divide( bytes, max),
+					                     order);
+				}
+		
+		    max /= scale;
+		  }
+		  return "0 Bytes";
 		}
 
 		/// <summary>

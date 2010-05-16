@@ -24,6 +24,7 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Diagnostics;
 using MediaDB.Backend;
 
 /// <summary>
@@ -58,7 +59,7 @@ namespace MediaDB.Backend
 		/// Starts a scanning/indexing session in <paramref name="paths"/>
 		/// </summary>
 		/// <param name="paths">
-		/// A <see cref="List<BasePath>"/>
+		/// A <see cref="List"/>
 		/// </param>
 		public static void Scan(List<BasePath> paths)
 		{
@@ -83,7 +84,7 @@ namespace MediaDB.Backend
 		/// Constructor
 		/// </summary>
 		/// <param name="paths">
-		/// A <see cref="List<BasePath>"/>
+		/// A <see cref="List"/>
 		/// </param>
 		public Scanner(List<BasePath> paths)
 		{
@@ -164,6 +165,11 @@ namespace MediaDB.Backend
 		private int taken = 0;
 
 		/// <summary>
+		/// Max number of bytes to allocate
+		/// </summary>
+		private long maxbytes = Manager.MaxBytes;
+
+		/// <summary>
 		/// The scanner object owning this object
 		/// </summary>
 		private Scanner scanner;
@@ -219,13 +225,28 @@ namespace MediaDB.Backend
 		}
 
 		/// <summary>
+		/// Can we release a new thread
+		/// </summary>
+		/// <returns>
+		/// A <see cref="System.Boolean"/>
+		/// </returns>
+		private bool isBusy()
+		{
+			if (taken >= slots)
+				return true;
+
+			return Process.GetCurrentProcess().PrivateMemorySize64 >= maxbytes
+			       && taken > 0;
+		}
+
+		/// <summary>
 		/// Start indexing
 		/// </summary>
 		public void Start()
 		{
 			foreach (CrawlerFile cf in Files) {
-				while (taken >= slots)
-					System.Threading.Thread.Sleep(300);
+				while (isBusy())
+					System.Threading.Thread.Sleep(50);
 
 				taken++;
 				FileProcessor fproc = Processor;
@@ -238,6 +259,8 @@ namespace MediaDB.Backend
 		/// </summary>
 		private void onProcess(IAsyncResult syncr)
 		{
+			//FileProcessor fproc = (FileProcessor)syncr.AsyncState;
+			//MediaFile mf = (MediaFile)fproc.EndInvoke(syncr);
 			freeSlot();
 		}
 
@@ -253,7 +276,6 @@ namespace MediaDB.Backend
 		private MediaFile Processor(CrawlerFile cf)
 		{
 			//Log.Debug(">>> Process file: {0}\n", cf.File.FullName);
-
 			FileHandler h = null;
 			switch (cf.MediaType.Mimetype)
 			{

@@ -26,6 +26,9 @@ using System.Collections;
 
 namespace MediaDB
 {
+	/// <summary>
+	/// Main class
+	/// </summary>
 	class MainClass
 	{
 		private const string HEADER =
@@ -57,8 +60,10 @@ namespace MediaDB
 			string cfg = @"\tmp\config.xml";
 #endif
 #else
-			string cfg = args[1];
+			string cfg = args[0];
 #endif
+
+
 
 			if (!Manager.Init(cfg)) {
 				Log.Werror("Error starting application!\n");
