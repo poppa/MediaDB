@@ -102,7 +102,7 @@ namespace MediaDB
 		/// A <see cref="System.String"/>
 		/// </param>
 		/// <returns>
-		/// A <see cref="System.Byte[]"/>
+		/// A <see cref="System.Byte"/> array
 		/// </returns>
 		public static byte[] Pdf2Jpeg(string path)
 		{
@@ -121,7 +121,7 @@ namespace MediaDB
 		/// A <see cref="System.String"/>
 		/// </param>
 		/// <returns>
-		/// A <see cref="System.Byte[]"/>
+		/// A <see cref="System.Byte"/> array
 		/// </returns>
 		public static byte[] Eps2Png(string path)
 		{
@@ -143,7 +143,7 @@ namespace MediaDB
 		/// A <see cref="System.String"/>
 		/// </param>
 		/// <returns>
-		/// A <see cref="System.Byte[]"/>
+		/// A <see cref="System.Byte"/> array
 		/// </returns>
 		private static byte[] iMagickConvert(string args, string outfile)
 		{

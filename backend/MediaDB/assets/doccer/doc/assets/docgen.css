@@ -1,0 +1,120 @@
+BODY { 
+  font: 80%/140% helvetica, Arial, sans-serif;
+  background: #e3e8e8 url(background.jpg) repeat-x;
+  padding: 35px 20px;
+  }
+#wrapper {
+  width: 980px;
+  margin: 0 auto;
+  }
+#header {  }
+#header H1 { 
+  margin: 0; 
+  font-size: 3.4em; 
+  letter-spacing: -2px; 
+  font-weight: bold;
+  text-shadow: 1px 1px #fff;
+  }
+#header H1 A { display: inline-block; text-decoration: none; }
+#content {
+  width: 720px;
+  float: right;
+  }
+*.clear { clear: both; }
+HR {
+  height: 2px;
+  border: none;
+  background: transparent url(divider.png) repeat-x;
+  margin: 20px 0;
+  clear: both;
+  }
+DIV.divider {
+  height: 2px;
+  border: none;
+  background: transparent url(divider.png) repeat-x;
+  margin: 20px 0;
+  clear: both;
+  }
+A { color: #04757c; }
+A IMG { border: none; }
+#content P A:hover { border-bottom: 1px dotted #04757c; text-decoration: none; }
+H1, H2, H3 { color: #04757c; font-family: arial, sans-serif; }
+H1, H2, H3 {
+  font-family: calibri;
+  }
+H1 { margin-top: 10px; }
+H2, H3 { margin-top: 30px; }
+H2.header {
+  color: #5C8C8F;
+  }
+#menu {
+  position: relative;
+  width: 23%;
+  float: left;
+  overflow: auto;
+  background: #F1F3F3;
+  padding: 5px;
+  -webkit-box-shadow: 1px 1px 5px #C7D5D5;
+  -moz-box-shadow: 1px 1px 5px #C7D5D5;
+  }
+#menu UL {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  }
+#menu UL LI {
+  margin-right: 5px;
+  }
+#menu UL LI A,
+#menu UL LI SPAN {
+  display: block;
+  padding: 1px 3px;
+  text-decoration: none;
+  }
+#menu UL LI SPAN { color: #666; }
+#menu UL LI.selected A {
+  font-weight: bold;
+  background: #04757c;
+  color: white;
+  text-shadow: 1px 1px #222;
+  }
+
+DIV.definition, DIV.members {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #F1F3F3;
+  -webkit-box-shadow: 1px 1px 5px #C7D5D5;
+  -moz-box-shadow: 1px 1px 5px #C7D5D5;
+  }
+DIV.definition H1, DIV.members H2 {
+  margin-top: 10px;
+  }
+DIV.member {
+  border-bottom: 1px dotted #BDD2D2;
+  padding-bottom: 30px;
+  }
+DIV.last { border-bottom: none; }
+DIV.method-info {
+  font-family: monospace;
+  font-size: 1.2em;
+  }
+SPAN.label {
+  display: inline-block; width: 60px;
+  text-align: right;
+  margin-right: 5px;
+  color: #777;
+  }
+*.property-name { color: #61081F; }
+*.data-type { color: #606E29; font-weight: normal; }
+*.param-name { color: #444A3E; font-weight: normal; }
+*.property-namespace { color: #299BB0; }
+*.property-class { color: #2957B0; }
+*.property-property { color: #B0293A; }
+
+*.code-element {
+  font-family: monospace;
+  color: #606E29;
+  }
+P *.code-element {
+  font-size: 1.20em;
+  }

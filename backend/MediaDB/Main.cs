@@ -41,9 +41,7 @@ namespace MediaDB
 		/// <summary>
 		/// Main entry point
 		/// </summary>
-		/// <param name="args">
-		/// A <see cref="System.String[]"/>
-		/// </param>
+		/// <param name="args"></param>
 		public static void Main (string[] args)
 		{
 			DateTime start = DateTime.Now;
@@ -62,8 +60,6 @@ namespace MediaDB
 #else
 			string cfg = args[0];
 #endif
-
-
 
 			if (!Manager.Init(cfg)) {
 				Log.Werror("Error starting application!\n");

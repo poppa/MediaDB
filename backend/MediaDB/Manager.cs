@@ -19,6 +19,8 @@
  * 	Pontus Östlund <pontus@poppa.se>
  */
 using System;
+using System.Security;
+using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -508,6 +510,43 @@ namespace MediaDB
 		{
 			Id = id;
 			Name = name;
+
+			initWatcher();
+		}
+
+		// File system watcher object
+		private FileSystemWatcher fsw;
+
+		// Initialize the file system watcher
+		private void initWatcher()
+		{
+			fsw = new FileSystemWatcher();
+			fsw.Path = Name;
+			fsw.IncludeSubdirectories = true;
+			fsw.NotifyFilter = NotifyFilters.LastWrite
+											 | NotifyFilters.CreationTime
+											 | NotifyFilters.FileName
+											 | NotifyFilters.DirectoryName;
+
+			fsw.Filter = "*.*"; 
+			fsw.Changed += new FileSystemEventHandler(onChanged);
+			fsw.Created += new FileSystemEventHandler(onChanged);
+			fsw.Deleted += new FileSystemEventHandler(onChanged);
+			fsw.Renamed += new RenamedEventHandler(onRenamed);
+
+			fsw.EnableRaisingEvents = true;
+		}
+
+		// Callback for Changed, Created and Deleted
+		private void onChanged(object source, FileSystemEventArgs args)
+		{
+			Log.Debug("onChanged({0}, {1})\n", args.FullPath, args.ChangeType);
+		}
+
+		// Callback for Renamed
+		private void onRenamed(object source, RenamedEventArgs args)
+		{
+			Log.Debug("onRenamed({0} >> {1})\n", args.OldFullPath, args.FullPath);
 		}
 	}
 

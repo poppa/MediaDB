@@ -35,14 +35,28 @@ namespace MediaDB
 	public static class Tools
 	{
 #if LINUX
+		/// <summary>
+		/// Directory separator character
+		/// </summary>
 		public const char DIR_SEPARATOR = '/';
+
+		/// <summary>
+		/// Directory separator string
+		/// </summary>
 		public const string DIR_SEPARATOR_S = "/";
 #else
+		/// <summary>
+		/// Directory separator character
+		/// </summary>
 		public const char DIR_SEPARATOR = '\\';
+
+		/// <summary>
+		/// Directory separator string
+		/// </summary>
 		public const string DIR_SEPARATOR_S = "\\";
 #endif
 
-		public static Encoding IsoEncoder = Encoding.GetEncoding("iso-8859-1");
+//		public static Encoding IsoEncoder = Encoding.GetEncoding("iso-8859-1");
 
 		/// <summary>
 		/// Checks if path is a directory
@@ -282,9 +296,9 @@ namespace MediaDB
 
 		/// <summary>
 		///   <para>Write the log message to the console</para>
-		///   <para>Behaves like <see cref="System.Console.WriteLine" /></para>
+		///   <para>Behaves like <see cref="System.Console.WriteLine()" /></para>
 		/// </summary>
-		/// <param name="format"><see cref="System.String.Format" /></param>
+		/// <param name="format"><see cref="System.String.Format(string,object)" /></param>
 		/// <param name="rest">Arbitrary number of replacements for format</param>
 		public static void Debug(string format, params object[] rest)
 		{

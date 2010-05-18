@@ -59,11 +59,11 @@ namespace MediaDB.Backend
 		/// Starts a scanning/indexing session in <paramref name="paths"/>
 		/// </summary>
 		/// <param name="paths">
-		/// A <see cref="List"/>
 		/// </param>
 		public static void Scan(List<BasePath> paths)
 		{
 			DateTime now = DateTime.Now;
+
 
 			Console.Write("\n::: Starting scanner pass: {0}\n", now);
 
@@ -84,7 +84,6 @@ namespace MediaDB.Backend
 		/// Constructor
 		/// </summary>
 		/// <param name="paths">
-		/// A <see cref="List"/>
 		/// </param>
 		public Scanner(List<BasePath> paths)
 		{
@@ -180,6 +179,7 @@ namespace MediaDB.Backend
 		/// <param name="path">
 		/// A <see cref="System.String"/>
 		/// </param>
+		/// <param name="scanner"></param>
 		public Indexer(BasePath path, Scanner scanner)
 		{
 			this.scanner = scanner;
@@ -230,13 +230,13 @@ namespace MediaDB.Backend
 		/// <returns>
 		/// A <see cref="System.Boolean"/>
 		/// </returns>
-		private bool isBusy()
+		private bool isBusy(CrawlerFile cf)
 		{
 			if (taken >= slots)
 				return true;
 
-			return Process.GetCurrentProcess().PrivateMemorySize64 >= maxbytes
-			       && taken > 0;
+			return Process.GetCurrentProcess().PrivateMemorySize64 + 
+				     cf.File.Length >= maxbytes && taken > 0;
 		}
 
 		/// <summary>
@@ -245,7 +245,7 @@ namespace MediaDB.Backend
 		public void Start()
 		{
 			foreach (CrawlerFile cf in Files) {
-				while (isBusy())
+				while (isBusy(cf))
 					System.Threading.Thread.Sleep(50);
 
 				taken++;
@@ -431,6 +431,9 @@ namespace MediaDB.Backend
 		/// </param>
 		/// <param name="mediatype">
 		/// A <see cref="MediaType"/>
+		/// </param>
+		/// <param name="basepath">
+		/// A <see name="BasePath" />
 		/// </param>
 		public CrawlerFile(FileInfo file, MediaType mediatype, BasePath basepath)
 		{

@@ -1,8 +1,5 @@
-///
-///			http://www.goheer.com
-///			visist goheer.com for latest version of this control
-///
-///
+// http://www.goheer.com
+// visist goheer.com for latest version of this control
 
 using System;
 using Goheer.EXIF;
@@ -273,8 +270,6 @@ namespace Goheer
 			/// 
 			/// </summary>
 			/// <param name="id"></param>
-			/// <param name="len"></param>
-			/// <param name="type"></param>
 			/// <param name="data"></param>
 			public void setTag(int id, string data)
 			{
@@ -338,6 +333,12 @@ namespace Goheer
 				buildDB(this.bmp.PropertyItems);
 			}
 			//string msp = "";
+			/// <summary>
+			/// Exif extractor
+			/// </summary>
+			/// <param name="bmp"></param>
+			/// <param name="sp"></param>
+			/// <param name="msp"></param>
 			public EXIFextractor(ref System.Drawing.Bitmap bmp, string sp, string msp )
 			{
 				properties = new Hashtable();
@@ -349,6 +350,12 @@ namespace Goheer
 				this.buildDB(bmp.PropertyItems);
 
 			}
+
+			/// <summary>
+			/// Get EXIF properties from file <paramref name="fileName"/>
+			/// </summary>
+			/// <param name="fileName"></param>
+			/// <returns></returns>
 			public static PropertyItem[] GetExifProperties(string fileName) 
 			{ 
 				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
@@ -357,6 +364,13 @@ namespace Goheer
 								 /* validateImageData = */ false);
 					return image.PropertyItems;
 			}
+
+			/// <summary>
+			/// Exif extractor
+			/// </summary>
+			/// <param name="file"></param>
+			/// <param name="sp"></param>
+			/// <param name="msp"></param>
 			public EXIFextractor(string file, string sp, string msp )
 			{
 				properties = new Hashtable();
@@ -621,11 +635,11 @@ namespace Goheer
 				else
 					return arr[3] << 24 | arr[2] << 16 | arr[1] << 8 | arr[0];
 			}
-			/// <summary>
-			/// 
-			/// </summary>
-			/// <param name="arr"></param>
-			/// <returns></returns>
+			// <summary>
+			// 
+			// </summary>
+			// <param name="arr"></param>
+			// <returns></returns>
 			/*int convertToInt16(byte [] arr)
 			{
 				if(arr.Length != 2 )
@@ -659,6 +673,10 @@ namespace Goheer
 			}
 			#region IEnumerable Members
 
+			/// <summary>
+			/// Returns an enumerator
+			/// </summary>
+			/// <returns></returns>
 			public IEnumerator GetEnumerator()
 			{
 				// TODO:  Add EXIFextractor.GetEnumerator implementation

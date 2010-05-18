@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-16"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>MediaDB.Backend.FileHandler</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" type="text/css" href="assets/docgen.css" />
+  </head>
+  <body>
+    <div id="wrapper">
+      <div id="header">
+        <h1>
+          <a href="index.html">MediaDB</a>
+        </h1>
+        <hr />
+      </div>
+      <div id="body">
+        <div id="menu" xmlns="">
+          <ul>
+            <li>
+              <a href="MediaDB.MainClass.html">MediaDB.MainClass</a>
+            </li>
+            <li>
+              <a href="MediaDB.Manager.html">MediaDB.Manager</a>
+            </li>
+            <li>
+              <a href="MediaDB.DBInfo.html">MediaDB.DBInfo</a>
+            </li>
+            <li>
+              <a href="MediaDB.BasePath.html">MediaDB.BasePath</a>
+            </li>
+            <li>
+              <a href="MediaDB.MediaType.html">MediaDB.MediaType</a>
+            </li>
+            <li>
+              <a href="MediaDB.Preview.html">MediaDB.Preview</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Scanner.html">MediaDB.Backend.Scanner</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Indexer.html">MediaDB.Backend.Indexer</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.CrawlerFile.html">MediaDB.Backend.CrawlerFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.DB.html">MediaDB.DB</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.EXIFextractor.html">Goheer.EXIF.EXIFextractor</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.translation.html">Goheer.EXIF.translation</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.Rational.html">Goheer.EXIF.Rational</a>
+            </li>
+            <li>
+              <a href="MediaDB.Gfx.html">MediaDB.Gfx</a>
+            </li>
+            <li>
+              <a href="MediaDB.Tools.html">MediaDB.Tools</a>
+            </li>
+            <li>
+              <a href="MediaDB.XML.html">MediaDB.XML</a>
+            </li>
+            <li>
+              <a href="MediaDB.Log.html">MediaDB.Log</a>
+            </li>
+            <li class="selected">
+              <a href="MediaDB.Backend.FileHandler.html">MediaDB.Backend.FileHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.IMGHandler.html">MediaDB.Backend.IMGHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.EPSHandler.html">MediaDB.Backend.EPSHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.PDFHandler.html">MediaDB.Backend.PDFHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.SVGHandler.html">MediaDB.Backend.SVGHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.IDBFile.html">MediaDB.Backend.IDBFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.MediaFile.html">MediaDB.Backend.MediaFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Directory.html">MediaDB.Backend.Directory</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.PreviewFile.html">MediaDB.Backend.PreviewFile</a>
+            </li>
+            <li>
+              <a href="FileProcessor.html">FileProcessor</a>
+            </li>
+          </ul>
+        </div>
+        <div id="content" xmlns="">
+          <div class="class">
+            <div class="definition">
+              <h1>MediaDB.Backend.FileHandler</h1>
+              <p>
+            Base handler class
+            </p>
+            </div>
+            <div class="summary">
+              <div class="members">
+                <h2 class="header">» Properties</h2>
+                <div class="member" id="P_MediaDB_Backend_FileHandler_File">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">File</span></h3>
+                  <p>
+            The real file object
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Backend_FileHandler_MediaType">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">MediaType</span></h3>
+                  <p>
+            The media type of the file
+            </p>
+                </div>
+                <div class="member last" id="P_MediaDB_Backend_FileHandler_MediaFile">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">MediaFile</span></h3>
+                  <p>
+            The media file object
+            </p>
+                </div>
+              </div>
+              <div class="members">
+                <h2 class="header">» Methods</h2>
+                <div class="member" id="M_MediaDB_Backend_FileHandler__ctor_System_IO_FileInfo_MediaDB_MediaType_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Backend</span>.<span class="property-property">FileHandler</span>(<span class="data-type">System.IO.FileInfo</span> <span class="param-name">file</span>, <a href="MediaDB.MediaType.html" class="data-type">MediaDB.MediaType</a> <span class="param-name">mediatype</span>);</h3>
+                  <p>
+            Constructor
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler__ctor_System_IO_FileInfo_MediaDB_MediaType_-file">Param: </span>
+                    <span class="data-type">System.IO.FileInfo</span> <span class="param-name">file</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler__ctor_System_IO_FileInfo_MediaDB_MediaType_-mediatype">Param: </span>
+                    <a href="MediaDB.MediaType.html" class="data-type">MediaDB.MediaType</a> <span class="param-name">mediatype</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_FileHandler_Dispose">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">Dispose</span>();</h3>
+                  <p>
+            Disposes this object
+            </p>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_FileHandler_Process">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">Process</span>();</h3>
+                  <p>
+            Process the file. Collects various info about the file.
+            Override this in subclasses to extract file specific info.
+            </p>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_FileHandler_GeneratePreviews_System_Drawing_Bitmap_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">GeneratePreviews</span>(<span class="data-type">System.Drawing.Bitmap</span> <span class="param-name">img</span>);</h3>
+                  <p>
+            Generate prieviews
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_GeneratePreviews_System_Drawing_Bitmap_-img">Param: </span>
+                    <span class="data-type">System.Drawing.Bitmap</span> <span class="param-name">img</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">lowGenImg</span>(<span class="data-type">System.Drawing.Bitmap</span> <span class="param-name">img</span>, <a href="MediaDB.Preview.html" class="data-type">MediaDB.Preview</a> <span class="param-name">p</span>, <span class="data-type">System.Drawing.Imaging.ImageFormat</span> <span class="param-name">fmt</span>, <span class="data-type">System.String</span> <span class="param-name">mime</span>, <span class="data-type">System.Drawing.Imaging.ImageCodecInfo</span> <span class="param-name">ici</span>, <span class="data-type">System.Drawing.Imaging.EncoderParameters</span> <span class="param-name">eparams</span>);</h3>
+                  <p>
+            Generates a preview image and populates a new
+            <a href="MediaDB.Backend.PreviewFile.html" class="code-element">MediaDB.Backend.PreviewFile</a> object.
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_-img">Param: </span>
+                    <span class="data-type">System.Drawing.Bitmap</span> <span class="param-name">img</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_-p">Param: </span>
+                    <a href="MediaDB.Preview.html" class="data-type">MediaDB.Preview</a> <span class="param-name">p</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_-fmt">Param: </span>
+                    <span class="data-type">System.Drawing.Imaging.ImageFormat</span> <span class="param-name">fmt</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_-mime">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">mime</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_-ici">Param: </span>
+                    <span class="data-type">System.Drawing.Imaging.ImageCodecInfo</span> <span class="param-name">ici</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_lowGenImg_System_Drawing_Bitmap__MediaDB_Preview_System_Drawing_Imaging_ImageFormat_System_String_System_Drawing_Imaging_ImageCodecInfo_System_Drawing_Imaging_EncoderParameters_-eparams">Param: </span>
+                    <span class="data-type">System.Drawing.Imaging.EncoderParameters</span> <span class="param-name">eparams</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_FileHandler_GetPreviewFormat_System_Drawing_Imaging_ImageFormat__System_String__">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">GetPreviewFormat</span>(<span class="data-type">System.Drawing.Imaging.ImageFormat</span> <span class="param-name">fmt</span>, <span class="data-type">System.String</span> <span class="param-name">mimetype</span>);</h3>
+                  <p>
+            Creates a name for a preview image.
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_GetPreviewFormat_System_Drawing_Imaging_ImageFormat__System_String__-fmt">Param: </span>
+                    <span class="data-type">System.Drawing.Imaging.ImageFormat</span> <span class="param-name">fmt</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_FileHandler_GetPreviewFormat_System_Drawing_Imaging_ImageFormat__System_String__-mimetype">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">mimetype</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_FileHandler_ContiueProcessing">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">ContiueProcessing</span>();</h3>
+                  <p>
+            Should we continue <a href="MMediaDB.Backend.FileHandler.Process.html" class="code-element">MMediaDB.Backend.FileHandler.Process</a> in derived classes.
+            If the file isn't changed no further processing is neccessary!
+            </p>
+                  <div class="method-info">
+                    <span class="label">Returns: </span>
+            A <span class="code-element">System.Boolean</span></div>
+                </div>
+                <div class="member last" id="M_MediaDB_Backend_FileHandler_SaveFile">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">FileHandler</span>.<span class="property-property">SaveFile</span>();</h3>
+                  <p>
+            Save the media file to database
+            </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br class="clear" xmlns="" />
+      </div>
+    </div>
+  </body>
+</html>

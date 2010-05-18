@@ -195,8 +195,8 @@ namespace MediaDB.Backend
 		/// <summary>
 		/// Creates a name for a preview image.
 		/// </summary>
-		/// <param name="pv"></param>
 		/// <param name="fmt"></param>
+		/// <param name="mimetype"></param>
 		/// <returns></returns>
 		protected void GetPreviewFormat(out ImageFormat fmt, out string mimetype)
 		{
@@ -229,7 +229,7 @@ namespace MediaDB.Backend
 				if (MediaFile.Sha1Hash == Tools.ComputeFileHash(MediaFile.FullName))
 					return false;
 				*/
-				if (MediaFile.Modified == File.LastWriteTime)
+				if (MediaFile.Modified <= File.LastWriteTime)
 					return false;
 
 				MediaFile.Modified = File.LastWriteTime;
@@ -273,7 +273,7 @@ namespace MediaDB.Backend
 		{
 			base.Process();
 
-			if (ContiueProcessing()) {
+			if (base.ContiueProcessing()) {
 				try {
 					Bitmap bmp = new Bitmap(File.FullName);
 					MediaFile.Width = bmp.Width;
@@ -295,7 +295,7 @@ namespace MediaDB.Backend
 					}
 					catch (Exception e) {
 						Log.Notice("Unable to extract EXIF from {0}: {1}\n",
-						           File.FullName, e.Message);
+											 File.FullName, e.Message);
 					}
 
 					GeneratePreviews(bmp);
@@ -307,7 +307,9 @@ namespace MediaDB.Backend
 				}
 				catch (Exception e) {
 					Log.Warning("Unable to handle file ({0}): {1}\n{2}\n",
-					            File.FullName, e.Message, e.StackTrace);
+											File.FullName, e.Message, e.StackTrace);
+					Log.File("Unable to handle file ({0}): {1}\n{2}\n",
+									 File.FullName, e.Message, e.StackTrace);
 				}
 			}
 		}
@@ -337,7 +339,7 @@ namespace MediaDB.Backend
 		{
 			base.Process();
 
-			if (ContiueProcessing()) {
+			if (base.ContiueProcessing()) {
 				try {
 					byte[] b = Gfx.Eps2Png(MediaFile.FullName);
 					if (b != null) {
@@ -387,7 +389,7 @@ namespace MediaDB.Backend
 		{
 			base.Process();
 
-			if (ContiueProcessing()) {
+			if (base.ContiueProcessing()) {
 				PdfReader rd = new PdfReader(MediaFile.FullName);
 				if (rd.Info.ContainsKey("Title")) {
 					string title = rd.Info["Title"].Trim();
@@ -452,7 +454,7 @@ namespace MediaDB.Backend
 		{
 			base.Process();
 
-			if (ContiueProcessing()) {
+			if (base.ContiueProcessing()) {
 				try {
 					XmlDocument xdoc = new XmlDocument();
 					xdoc.Load(MediaFile.FullName);

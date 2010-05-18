@@ -42,6 +42,7 @@ namespace MediaDB
 		/// <summary>
 		/// Performs a database query
 		/// </summary>
+		/// <param name="rd"></param>
 		/// <param name="sql"></param>
 		/// <param name="args"></param>
 		/// <returns></returns>
@@ -75,18 +76,12 @@ namespace MediaDB
 		/// <summary>
 		/// Query database with insert statement.
 		/// </summary>
-		/// <param name="id">
-		/// A <see cref="System.Int64"/>. Will be populated with the insert ID.
+		/// <param name="id">Will be populated with the insert ID.</param>
+		/// <param name="sql">The SQL query</param>
+		/// <param name="args">Arbitrary replacement parameters for 
+		///  <paramref name="sql"/>
 		/// </param>
-		/// <param name="sql">
-		/// A <see cref="System.String"/>. The SQL query
-		/// </param>
-		/// <param name="args">
-		/// A <see cref="MySqlParameter[]"/>. Query parameters.
-		/// </param>
-		/// <returns>
-		/// A <see cref="System.Boolean"/>
-		/// </returns>
+		/// <returns><see cref="System.Boolean"/></returns>
 		public static bool QueryInsert(out long id, string sql,
 		                               params MySqlParameter[] args)
 		{

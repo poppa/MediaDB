@@ -1,0 +1,1627 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>/home/pontus/MediaDB/backend/MediaDB/bin/x86/DebugLinux/MediaDB</name>
+    </assembly>
+    <members>
+        <member name="T:MediaDB.MainClass">
+            <summary>
+            Main class
+            </summary>
+        </member>
+        <member name="F:MediaDB.MainClass.worker">
+            <summary>
+            The background worker
+            </summary>
+        </member>
+        <member name="F:MediaDB.MainClass.workerCompleted">
+            <summary>
+            Is the current worker done or not.
+            </summary>
+        </member>
+        <member name="M:MediaDB.MainClass.Main(System.String[])">
+            <summary>
+            Main entry point
+            </summary>
+            <param name="args">
+            </param>
+        </member>
+        <member name="M:MediaDB.MainClass.StartWorker">
+            <summary>
+            Starts the backgrpund worker thread for a scanning pass
+            </summary>
+        </member>
+        <member name="M:MediaDB.MainClass.MainLoop">
+            <summary>
+            Enter the MainLoop
+            </summary>
+        </member>
+        <member name="T:MediaDB.Manager">
+            <summary>
+            Static class for reading the config file
+            </summary>
+        </member>
+        <member name="F:MediaDB.Manager.mutex">
+            <summary>
+            Global mutex object
+            </summary>
+        </member>
+        <member name="F:MediaDB.Manager.NullDate">
+            <summary>
+            Null date
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.File">
+            <summary>
+            The path to the config file
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.DatabaseInfo">
+            <summary>
+            Database connection info, host, db, user, password
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.BasePaths">
+            <summary>
+            List of paths to index/scan
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.MediaTypes">
+            <summary>
+            List of file types to collect
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.Previews">
+            <summary>
+            Array of preview templates
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.Directories">
+            <summary>
+            List of directories
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.PreviewMinWidth">
+            <summary>
+            The width of the smallest preview template
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.PreviewMinHeight">
+            <summary>
+            The height of the smallest preview template
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.Threads">
+            <summary>
+            Number of concurrent threads to run when indexing
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.TmpDir">
+            <summary>
+            Path to the applications temp directory
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.DbCon">
+            <summary>
+            The database connection
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.PreviewQuality">
+            <summary>
+            Quality of preview images
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.MaxBytes">
+            <summary>
+            Max number of bytes the application can consume during indexing
+            </summary>
+        </member>
+        <member name="P:MediaDB.Manager.FileIndex">
+            <summary>
+            List of all files
+            </summary>
+        </member>
+        <member name="M:MediaDB.Manager.Init(System.String)">
+            <summary>
+            Read the config file and populate this class
+            </summary>
+            <param name="file">
+            A <see cref="T:System.String" /></param>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Manager.GetDirectory(System.String)">
+            <summary>
+            Returns the directory object for <paramref name="path" /> if
+            it exists.
+            </summary>
+            <param name="path">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Manager.GetMediaType(System.IO.FileInfo)">
+            <summary>
+            Returns the media type for the given file or null if non is found
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <returns>
+            A <see cref="T:MediaDB.MediaType" /></returns>
+        </member>
+        <member name="M:MediaDB.Manager.GetMediaFile(System.String)">
+            <summary>
+            Get media file for <paramref name="fullname" />.
+            If it exists in the database the media file object will be
+            populated. Otherwise an empty <see cref="T:MediaDB.Backend.MediaFile" /> object will
+            be returned.
+            </summary>
+            <param name="fullname">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Manager.Dispose">
+            <summary>
+            Dispose, close db e t c.
+            </summary>
+        </member>
+        <member name="T:MediaDB.DBInfo">
+            <summary>
+            Class for storing info about the database connection
+            </summary>
+        </member>
+        <member name="F:MediaDB.DBInfo.Host">
+            <summary>
+            The database host name
+            </summary>
+        </member>
+        <member name="F:MediaDB.DBInfo.Name">
+            <summary>
+            The database name
+            </summary>
+        </member>
+        <member name="F:MediaDB.DBInfo.Username">
+            <summary>
+            The database username
+            </summary>
+        </member>
+        <member name="F:MediaDB.DBInfo.Password">
+            <summary>
+            The database user's password
+            </summary>
+        </member>
+        <member name="T:MediaDB.BasePath">
+            <summary>
+            Base path
+            </summary>
+        </member>
+        <member name="M:MediaDB.BasePath.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MediaDB.BasePath.#ctor(System.Int64,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="id">
+            A <see cref="T:System.Int64" /></param>
+            <param name="name">
+            A <see cref="T:System.String" /></param>
+        </member>
+        <member name="F:MediaDB.BasePath.Id">
+            <summary>
+            MySql ID
+            </summary>
+        </member>
+        <member name="F:MediaDB.BasePath.Name">
+            <summary>
+            Path name
+            </summary>
+        </member>
+        <member name="T:MediaDB.MediaType">
+            <summary>
+            Media type object
+            </summary>
+        </member>
+        <member name="F:MediaDB.MediaType.Mimetype">
+            <summary>
+            Mimetype of this media type
+            </summary>
+        </member>
+        <member name="P:MediaDB.MediaType.Extension">
+            <summary>
+            Extensions (comma separated string) associated to this media type
+            </summary>
+        </member>
+        <member name="P:MediaDB.MediaType.Extensions">
+            <summary>
+            Extensions associated to this media
+            </summary>
+        </member>
+        <member name="M:MediaDB.MediaType.HasExtension(System.String)">
+            <summary>
+            Checks if <paramref name="extension" /> is handled by this mediatype
+            </summary>
+            <param name="extension">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.MediaType.ToString">
+            <summary>
+            Cast to string
+            </summary>
+            <returns>
+            </returns>
+        </member>
+        <member name="T:MediaDB.Preview">
+            <summary>
+            Class representing a preview image template
+            </summary>
+        </member>
+        <member name="M:MediaDB.Preview.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MediaDB.Preview.#ctor(System.Int32,System.Int32,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="width">
+            A <see cref="T:System.UInt32" /></param>
+            <param name="height">
+            A <see cref="T:System.UInt32" /></param>
+            <param name="name">
+            A <see cref="T:System.String" /></param>
+        </member>
+        <member name="F:MediaDB.Preview.Width">
+            <summary>
+            Max width of the preview
+            </summary>
+        </member>
+        <member name="F:MediaDB.Preview.Height">
+            <summary>
+            Max height of the preview
+            </summary>
+        </member>
+        <member name="F:MediaDB.Preview.Name">
+            <summary>
+            Arbitrary name of the template
+            </summary>
+        </member>
+        <member name="M:MediaDB.Preview.CompareTo(System.Object)">
+            <summary>
+            Comparer method
+            </summary>
+            <param name="other">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="T:MediaDB.Backend.Scanner">
+            <summary>
+            Container class for <see cref="T:MediaDB.Backend.Indexer" />s
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Scanner.#ctor(System.Collections.Generic.List{MediaDB.BasePath})">
+            <summary>
+            Constructor
+            </summary>
+            <param name="paths">
+            </param>
+        </member>
+        <member name="F:MediaDB.Backend.Scanner.indexers">
+            <summary>
+            List of <see cref="T:MediaDB.Backend.Indexer" />s
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.Scanner.TotalFiles">
+            <summary>
+            Total number of files collected
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.Scanner.FilesDone">
+            <summary>
+            Number of files processed
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Scanner.Scan(System.Collections.Generic.List{MediaDB.BasePath})">
+            <summary>
+            Starts a scanning/indexing session in <paramref name="paths" /></summary>
+            <param name="paths">
+            </param>
+        </member>
+        <member name="M:MediaDB.Backend.Scanner.Run">
+            <summary>
+            Start indexing
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Scanner.NotifyDone">
+            <summary>
+            Called from a <see cref="T:MediaDB.Backend.Indexer" /> when a file has been processed
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Scanner.Dispose">
+            <summary>
+            Disposes this object
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.Indexer">
+            <summary>
+            Class for indexing a directory path. Scans recursively through the
+            directory.
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.#ctor(MediaDB.BasePath,MediaDB.Backend.Scanner)">
+            <summary>
+            Contructor
+            </summary>
+            <param name="path">
+            A <see cref="T:System.String" /></param>
+            <param name="scanner">
+            </param>
+        </member>
+        <member name="F:MediaDB.Backend.Indexer.slots">
+            <summary>
+            Number of concurrent threads to use
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Indexer.taken">
+            <summary>
+            Number of used threads
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Indexer.maxbytes">
+            <summary>
+            Max number of bytes to allocate
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Indexer.scanner">
+            <summary>
+            The scanner object owning this object
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.Indexer.Path">
+            <summary>
+            The root path
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.Indexer.Files">
+            <summary>
+            Array of found files
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.Indexer.Directories">
+            <summary>
+            List of collected directories
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.freeSlot">
+            <summary>
+            Frees a slot for a thread
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.isBusy(MediaDB.Backend.CrawlerFile)">
+            <summary>
+            Can we release a new thread
+            </summary>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.Start">
+            <summary>
+            Start indexing
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.onProcess(System.IAsyncResult)">
+            <summary>
+            Callback for when a file has been processed
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.Processor(MediaDB.Backend.CrawlerFile)">
+            <summary>
+            Async method for processing files
+            </summary>
+            <param name="cf">
+            A <see cref="T:MediaDB.Backend.CrawlerFile" /></param>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.Dispose">
+            <summary>
+            Disposes the object
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.findParentDirectory(System.IO.DirectoryInfo)">
+            <summary>
+            Finds the parent firectory for <paramref name="dir" /></summary>
+            <param name="dir">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.getDirectoryShortName(System.String)">
+            <summary>
+            Returns the directory name of <paramref name="path" />
+            minus the the base path
+            </summary>
+            <param name="path">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.Indexer.crawl(System.String)">
+            <summary>
+            Crawl directory for files
+            </summary>
+            <param name="path">
+            A <see cref="T:System.String" /></param>
+        </member>
+        <member name="T:MediaDB.Backend.CrawlerFile">
+            <summary>
+            Container for a file and its media type
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.CrawlerFile.#ctor(System.IO.FileInfo,MediaDB.MediaType,MediaDB.BasePath)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <param name="mediatype">
+            A <see cref="T:MediaDB.MediaType" /></param>
+            <param name="basepath">
+            A <see name="BasePath" /></param>
+        </member>
+        <member name="F:MediaDB.Backend.CrawlerFile.File">
+            <summary>
+            The file object
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.CrawlerFile.MediaType">
+            <summary>
+            The media type
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.CrawlerFile.BasePath">
+            <summary>
+            The basepath this file recides in
+            </summary>
+        </member>
+        <member name="T:MediaDB.DB">
+            <summary>
+            Database helper class
+            </summary>
+        </member>
+        <member name="M:MediaDB.DB.Param(System.String,System.Object)">
+            <summary>
+            Creates a MySqlParameter
+            </summary>
+            <param name="name">
+            </param>
+            <param name="value">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.DB.EndReader(MySql.Data.MySqlClient.MySqlDataReader@)">
+            <summary>
+            Disposes a MySqlDataReader object
+            </summary>
+            <param name="r">
+            </param>
+        </member>
+        <member name="M:MediaDB.DB.QueryReader(MySql.Data.MySqlClient.MySqlDataReader@,System.String,MySql.Data.MySqlClient.MySqlParameter[])">
+            <summary>
+            Performs a database query
+            </summary>
+            <param name="rd">
+            </param>
+            <param name="sql">
+            </param>
+            <param name="args">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.DB.QueryInsert(System.Int64@,System.String,MySql.Data.MySqlClient.MySqlParameter[])">
+            <summary>
+            Query database with insert statement.
+            </summary>
+            <param name="id">Will be populated with the insert ID.</param>
+            <param name="sql">The SQL query</param>
+            <param name="args">Arbitrary replacement parameters for
+            <paramref name="sql" /></param>
+            <returns>
+                <see cref="T:System.Boolean" />
+            </returns>
+        </member>
+        <member name="M:MediaDB.DB.Query(System.String,MySql.Data.MySqlClient.MySqlParameter[])">
+            <summary>
+            Plain "NonQuery" query. No query result is expected.
+            </summary>
+            <param name="sql">
+            </param>
+            <param name="args">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.DB.IsNull(System.Object)">
+            <summary>
+            Checks if db column <paramref name="col" /> is null
+            </summary>
+            <param name="col">
+            A <see cref="T:System.Object" /></param>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="T:Goheer.EXIF.EXIFextractor">
+            <summary>
+            EXIFextractor Class
+            </summary>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.#ctor(System.Drawing.Bitmap@,System.String)">
+            <summary>
+            </summary>
+            <param name="bmp">
+            </param>
+            <param name="sp">
+            </param>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.#ctor(System.Drawing.Bitmap@,System.String,System.String)">
+            <summary>
+            Exif extractor
+            </summary>
+            <param name="bmp">
+            </param>
+            <param name="sp">
+            </param>
+            <param name="msp">
+            </param>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Exif extractor
+            </summary>
+            <param name="file">
+            </param>
+            <param name="sp">
+            </param>
+            <param name="msp">
+            </param>
+        </member>
+        <member name="P:Goheer.EXIF.EXIFextractor.Item(System.String)">
+            <summary>
+            Get the individual property value by supplying property name
+            These are the valid property names :
+            "Exif IFD"
+            "Gps IFD"
+            "New Subfile Type"
+            "Subfile Type"
+            "Image Width"
+            "Image Height"
+            "Bits Per Sample"
+            "Compression"
+            "Photometric Interp"
+            "Thresh Holding"
+            "Cell Width"
+            "Cell Height"
+            "Fill Order"
+            "Document Name"
+            "Image Description"
+            "Equip Make"
+            "Equip Model"
+            "Strip Offsets"
+            "Orientation"
+            "Samples PerPixel"
+            "Rows Per Strip"
+            "Strip Bytes Count"
+            "Min Sample Value"
+            "Max Sample Value"
+            "X Resolution"
+            "Y Resolution"
+            "Planar Config"
+            "Page Name"
+            "X Position"
+            "Y Position"
+            "Free Offset"
+            "Free Byte Counts"
+            "Gray Response Unit"
+            "Gray Response Curve"
+            "T4 Option"
+            "T6 Option"
+            "Resolution Unit"
+            "Page Number"
+            "Transfer Funcition"
+            "Software Used"
+            "Date Time"
+            "Artist"
+            "Host Computer"
+            "Predictor"
+            "White Point"
+            "Primary Chromaticities"
+            "ColorMap"
+            "Halftone Hints"
+            "Tile Width"
+            "Tile Length"
+            "Tile Offset"
+            "Tile ByteCounts"
+            "InkSet"
+            "Ink Names"
+            "Number Of Inks"
+            "Dot Range"
+            "Target Printer"
+            "Extra Samples"
+            "Sample Format"
+            "S Min Sample Value"
+            "S Max Sample Value"
+            "Transfer Range"
+            "JPEG Proc"
+            "JPEG InterFormat"
+            "JPEG InterLength"
+            "JPEG RestartInterval"
+            "JPEG LosslessPredictors"
+            "JPEG PointTransforms"
+            "JPEG QTables"
+            "JPEG DCTables"
+            "JPEG ACTables"
+            "YCbCr Coefficients"
+            "YCbCr Subsampling"
+            "YCbCr Positioning"
+            "REF Black White"
+            "ICC Profile"
+            "Gamma"
+            "ICC Profile Descriptor"
+            "SRGB RenderingIntent"
+            "Image Title"
+            "Copyright"
+            "Resolution X Unit"
+            "Resolution Y Unit"
+            "Resolution X LengthUnit"
+            "Resolution Y LengthUnit"
+            "Print Flags"
+            "Print Flags Version"
+            "Print Flags Crop"
+            "Print Flags Bleed Width"
+            "Print Flags Bleed Width Scale"
+            "Halftone LPI"
+            "Halftone LPIUnit"
+            "Halftone Degree"
+            "Halftone Shape"
+            "Halftone Misc"
+            "Halftone Screen"
+            "JPEG Quality"
+            "Grid Size"
+            "Thumbnail Format"
+            "Thumbnail Width"
+            "Thumbnail Height"
+            "Thumbnail ColorDepth"
+            "Thumbnail Planes"
+            "Thumbnail RawBytes"
+            "Thumbnail Size"
+            "Thumbnail CompressedSize"
+            "Color Transfer Function"
+            "Thumbnail Data"
+            "Thumbnail ImageWidth"
+            "Thumbnail ImageHeight"
+            "Thumbnail BitsPerSample"
+            "Thumbnail Compression"
+            "Thumbnail PhotometricInterp"
+            "Thumbnail ImageDescription"
+            "Thumbnail EquipMake"
+            "Thumbnail EquipModel"
+            "Thumbnail StripOffsets"
+            "Thumbnail Orientation"
+            "Thumbnail SamplesPerPixel"
+            "Thumbnail RowsPerStrip"
+            "Thumbnail StripBytesCount"
+            "Thumbnail ResolutionX"
+            "Thumbnail ResolutionY"
+            "Thumbnail PlanarConfig"
+            "Thumbnail ResolutionUnit"
+            "Thumbnail TransferFunction"
+            "Thumbnail SoftwareUsed"
+            "Thumbnail DateTime"
+            "Thumbnail Artist"
+            "Thumbnail WhitePoint"
+            "Thumbnail PrimaryChromaticities"
+            "Thumbnail YCbCrCoefficients"
+            "Thumbnail YCbCrSubsampling"
+            "Thumbnail YCbCrPositioning"
+            "Thumbnail RefBlackWhite"
+            "Thumbnail CopyRight"
+            "Luminance Table"
+            "Chrominance Table"
+            "Frame Delay"
+            "Loop Count"
+            "Pixel Unit"
+            "Pixel PerUnit X"
+            "Pixel PerUnit Y"
+            "Palette Histogram"
+            "Exposure Time"
+            "F-Number"
+            "Exposure Prog"
+            "Spectral Sense"
+            "ISO Speed"
+            "OECF"
+            "Ver"
+            "DTOrig"
+            "DTDigitized"
+            "CompConfig"
+            "CompBPP"
+            "Shutter Speed"
+            "Aperture"
+            "Brightness"
+            "Exposure Bias"
+            "MaxAperture"
+            "SubjectDist"
+            "Metering Mode"
+            "LightSource"
+            "Flash"
+            "FocalLength"
+            "Maker Note"
+            "User Comment"
+            "DTSubsec"
+            "DTOrigSS"
+            "DTDigSS"
+            "FPXVer"
+            "ColorSpace"
+            "PixXDim"
+            "PixYDim"
+            "RelatedWav"
+            "Interop"
+            "FlashEnergy"
+            "SpatialFR"
+            "FocalXRes"
+            "FocalYRes"
+            "FocalResUnit"
+            "Subject Loc"
+            "Exposure Index"
+            "Sensing Method"
+            "FileSource"
+            "SceneType"
+            "CfaPattern"
+            "Gps Ver"
+            "Gps LatitudeRef"
+            "Gps Latitude"
+            "Gps LongitudeRef"
+            "Gps Longitude"
+            "Gps AltitudeRef"
+            "Gps Altitude"
+            "Gps GpsTime"
+            "Gps GpsSatellites"
+            "Gps GpsStatus"
+            "Gps GpsMeasureMode"
+            "Gps GpsDop"
+            "Gps SpeedRef"
+            "Gps Speed"
+            "Gps TrackRef"
+            "Gps Track"
+            "Gps ImgDirRef"
+            "Gps ImgDir"
+            "Gps MapDatum"
+            "Gps DestLatRef"
+            "Gps DestLat"
+            "Gps DestLongRef"
+            "Gps DestLong"
+            "Gps DestBearRef"
+            "Gps DestBear"
+            "Gps DestDistRef"
+            "Gps DestDist"
+            </summary>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.setTag(System.Int32,System.String)">
+            <summary>
+            </summary>
+            <param name="id">
+            </param>
+            <param name="data">
+            </param>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.setTag(System.Int32,System.Int32,System.Int16,System.Byte[])">
+            <summary>
+            </summary>
+            <param name="id">
+            </param>
+            <param name="len">
+            </param>
+            <param name="type">
+            </param>
+            <param name="data">
+            </param>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.CreatePropertyItem(System.Int16,System.Int32,System.Int32,System.Byte[])">
+            <summary>
+            </summary>
+            <param name="type">
+            </param>
+            <param name="tag">
+            </param>
+            <param name="len">
+            </param>
+            <param name="value">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.GetExifProperties(System.String)">
+            <summary>
+            Get EXIF properties from file <paramref name="fileName" /></summary>
+            <param name="fileName">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.buildDB(System.Drawing.Imaging.PropertyItem[])">
+            <summary>
+            </summary>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.ToString">
+            <summary>
+            </summary>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.convertToInt32(System.Byte[])">
+            <summary>
+            </summary>
+            <param name="arr">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.convertToInt32U(System.Byte[])">
+            <summary>
+            </summary>
+            <param name="arr">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.convertToInt16U(System.Byte[])">
+            <summary>
+            </summary>
+            <param name="arr">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:Goheer.EXIF.EXIFextractor.GetEnumerator">
+            <summary>
+            Returns an enumerator
+            </summary>
+            <returns>
+            </returns>
+        </member>
+        <member name="T:Goheer.EXIF.translation">
+            <summary>
+            Summary description for translation.
+            </summary>
+        </member>
+        <member name="M:Goheer.EXIF.translation.#ctor">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:Goheer.EXIF.Rational">
+            <summary>
+            private class
+            </summary>
+        </member>
+        <member name="T:MediaDB.Gfx">
+            <summary>
+            Various graphics related methods
+            </summary>
+        </member>
+        <member name="M:MediaDB.Gfx.GetConstraints(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Scale with constraint proportions
+            </summary>
+            <param name="org_x">
+            </param>
+            <param name="org_y">
+            </param>
+            <param name="max_x">
+            </param>
+            <param name="max_y">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Gfx.ScaleImage(System.Drawing.Bitmap,System.Int32,System.Int32)">
+            <summary>
+            Scale image to <paramref name="width" /> and <paramref name="height" /></summary>
+            <param name="img">
+            </param>
+            <param name="width">
+            </param>
+            <param name="height">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Gfx.GetEncoderInfo(System.String)">
+            <summary>
+            Returns a <see cref="T:System.Drawing.Imaging.ImageCodecInfo" /> info for
+            <paramref name="mimetype" /> that can be used for compression settings.
+            </summary>
+            <param name="mimetype">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Gfx.Pdf2Jpeg(System.String)">
+            <summary>
+            Create a JPEG image of PDF file <paramref name="path" />.
+            </summary>
+            <param name="path">
+            A <see cref="T:System.String" /></param>
+            <returns>
+            A <see cref="T:System.Byte" /> array
+            </returns>
+        </member>
+        <member name="M:MediaDB.Gfx.Eps2Png(System.String)">
+            <summary>
+            Convert eps to png.
+            </summary>
+            <param name="path">
+            A <see cref="T:System.String" /></param>
+            <returns>
+            A <see cref="T:System.Byte" /> array
+            </returns>
+        </member>
+        <member name="M:MediaDB.Gfx.iMagickConvert(System.String,System.String)">
+            <summary>
+            Execute ImageMagicks "convert".
+            </summary>
+            <param name="args">
+            A <see cref="T:System.String" /></param>
+            <param name="outfile">
+            A <see cref="T:System.String" /></param>
+            <returns>
+            A <see cref="T:System.Byte" /> array
+            </returns>
+        </member>
+        <member name="M:MediaDB.Gfx.SvgMetadata(System.Xml.XmlNode)">
+            <summary>
+            Retrieves metadata from an SVG file
+            </summary>
+            <param name="svg">
+            A <see cref="T:System.Xml.XmlNode" /></param>
+            <returns>
+            A <see cref="T:System.Collections.Hashtable" /></returns>
+        </member>
+        <member name="T:MediaDB.Tools">
+            <summary>
+            Variuos helper methods
+            </summary>
+        </member>
+        <member name="F:MediaDB.Tools.DIR_SEPARATOR">
+            <summary>
+            Directory separator character
+            </summary>
+        </member>
+        <member name="F:MediaDB.Tools.DIR_SEPARATOR_S">
+            <summary>
+            Directory separator string
+            </summary>
+        </member>
+        <member name="M:MediaDB.Tools.IsDir(System.String)">
+            <summary>
+            Checks if path is a directory
+            </summary>
+            <param name="path">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Tools.FileExists(System.String)">
+            <summary>
+            Checks if path exists
+            </summary>
+            <param name="path">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Tools.DirectoryExists(System.String)">
+            <summary>
+            Checks if directory path exists
+            </summary>
+            <param name="path">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Tools.ComputeFileHash(System.String)">
+            <summary>
+            Compute a hash of the file content.
+            </summary>
+            <param name="file">
+            A <see cref="T:System.String" /></param>
+            <returns>
+            A <see cref="T:System.String" /></returns>
+        </member>
+        <member name="M:MediaDB.Tools.Tmpnam">
+            <summary>
+            Generates a temp name
+            </summary>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Tools.TmpPath">
+            <summary>
+            Creates a full temporary file path
+            </summary>
+            <returns>
+            A <see cref="T:System.String" /></returns>
+        </member>
+        <member name="M:MediaDB.Tools.BuildPath(System.String[])">
+            <summary>
+            Build a path from arbitrary number of arguments
+            </summary>
+            <param name="parts">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Tools.IsoEncode(System.String)">
+            <summary>
+            ISO-8859-1 encode string <paramref name="s" /></summary>
+            <param name="s">
+            A <see cref="T:System.String" /></param>
+            <returns>
+            A <see cref="T:System.String" /></returns>
+        </member>
+        <member name="M:MediaDB.Tools.FormatBytes(System.Int64)">
+            <summary>
+            String representation of <paramref name="bytes" /></summary>
+            <param name="bytes">
+            A <see cref="T:System.Int64" /></param>
+            <returns>
+            A <see cref="T:System.String" /></returns>
+        </member>
+        <member name="M:MediaDB.Tools.Exit">
+            <summary>
+            Exit application
+            </summary>
+        </member>
+        <member name="M:MediaDB.Tools.Exit(System.Int32)">
+            <summary>
+            Exit application with code
+            </summary>
+            <param name="code">
+            </param>
+        </member>
+        <member name="T:MediaDB.XML">
+            <summary>
+            Various XML helpers
+            </summary>
+        </member>
+        <member name="M:MediaDB.XML.FindNode(System.String,System.Xml.XmlNode)">
+            <summary>
+            Find node with local name <paramref name="name" /> in
+            <paramref name="node" /> .
+            </summary>
+            <param name="name">
+            A <see cref="T:System.String" /></param>
+            <param name="node">
+            A <see cref="T:System.Xml.XmlNode" /></param>
+            <returns>
+            A <see cref="T:System.Xml.XmlNode" /></returns>
+        </member>
+        <member name="T:MediaDB.Log">
+            <summary>
+            A static class for logging
+            </summary>
+        </member>
+        <member name="F:MediaDB.Log.Path">
+            <summary>
+            Directory path where to store the log
+            </summary>
+        </member>
+        <member name="F:MediaDB.Log.FileName">
+            <summary>
+            Name of the log file
+            </summary>
+        </member>
+        <member name="P:MediaDB.Log.LogFile">
+            <summary>
+            Full path to logfile
+            </summary>
+        </member>
+        <member name="M:MediaDB.Log.Werror(System.String,System.Object[])">
+            <summary>
+            Write to stderr
+            </summary>
+            <param name="msg">
+            </param>
+            <param name="rest">
+            </param>
+        </member>
+        <member name="M:MediaDB.Log.Debug(System.String,System.Object[])">
+            <summary>
+                <para>Write the log message to the console</para>
+                <para>Behaves like <see cref="M:System.Console.WriteLine" /></para>
+            </summary>
+            <param name="format">
+                <see cref="M:System.String.Format(System.String,System.Object)" />
+            </param>
+            <param name="rest">Arbitrary number of replacements for format</param>
+        </member>
+        <member name="M:MediaDB.Log.Warning(System.String,System.Object[])">
+            <summary>
+            Write a warning message to stdout
+            </summary>
+            <param name="format">
+            </param>
+            <param name="rest">
+            </param>
+        </member>
+        <member name="M:MediaDB.Log.Notice(System.String,System.Object[])">
+            <summary>
+            Write a notice message to stdout
+            </summary>
+            <param name="format">
+            </param>
+            <param name="rest">
+            </param>
+        </member>
+        <member name="M:MediaDB.Log.File(System.String,System.Object[])">
+            <summary>
+            Write to file
+            </summary>
+            <param name="format">
+            </param>
+            <param name="rest">
+            </param>
+        </member>
+        <member name="T:MediaDB.Backend.FileHandler">
+            <summary>
+            Base handler class
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.#ctor(System.IO.FileInfo,MediaDB.MediaType)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <param name="mediatype">
+            A <see cref="T:MediaDB.MediaType" /></param>
+        </member>
+        <member name="P:MediaDB.Backend.FileHandler.File">
+            <summary>
+            The real file object
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.FileHandler.MediaType">
+            <summary>
+            The media type of the file
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.FileHandler.MediaFile">
+            <summary>
+            The media file object
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.Dispose">
+            <summary>
+            Disposes this object
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.Process">
+            <summary>
+            Process the file. Collects various info about the file.
+            Override this in subclasses to extract file specific info.
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.GeneratePreviews(System.Drawing.Bitmap)">
+            <summary>
+            Generate prieviews
+            </summary>
+            <param name="img">
+            </param>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.lowGenImg(System.Drawing.Bitmap@,MediaDB.Preview,System.Drawing.Imaging.ImageFormat,System.String,System.Drawing.Imaging.ImageCodecInfo,System.Drawing.Imaging.EncoderParameters)">
+            <summary>
+            Generates a preview image and populates a new
+            <see cref="T:MediaDB.Backend.PreviewFile" /> object.
+            </summary>
+            <param name="img">
+            </param>
+            <param name="p">
+            </param>
+            <param name="fmt">
+            </param>
+            <param name="mime">
+            </param>
+            <param name="ici">
+            </param>
+            <param name="eparams">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.GetPreviewFormat(System.Drawing.Imaging.ImageFormat@,System.String@)">
+            <summary>
+            Creates a name for a preview image.
+            </summary>
+            <param name="fmt">
+            </param>
+            <param name="mimetype">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.ContiueProcessing">
+            <summary>
+            Should we continue <see cref="M:MediaDB.Backend.FileHandler.Process" /> in derived classes.
+            If the file isn't changed no further processing is neccessary!
+            </summary>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Backend.FileHandler.SaveFile">
+            <summary>
+            Save the media file to database
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.IMGHandler">
+            <summary>
+            Handler for JPEG, TIFF and PNG
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.IMGHandler.#ctor(System.IO.FileInfo,MediaDB.MediaType)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <param name="mediatype">
+            A <see cref="T:MediaDB.MediaType" /></param>
+        </member>
+        <member name="M:MediaDB.Backend.IMGHandler.Process">
+            <summary>
+            Collects metadata about the file
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.EPSHandler">
+            <summary>
+            Handler for EPS files
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.EPSHandler.#ctor(System.IO.FileInfo,MediaDB.MediaType)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <param name="mediatype">
+            A <see cref="T:MediaDB.MediaType" /></param>
+        </member>
+        <member name="M:MediaDB.Backend.EPSHandler.Process">
+            <summary>
+            Collects metadata about the file
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.PDFHandler">
+            <summary>
+            Handler for PDF files
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.PDFHandler.#ctor(System.IO.FileInfo,MediaDB.MediaType)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <param name="mediatype">
+            A <see cref="T:MediaDB.MediaType" /></param>
+        </member>
+        <member name="M:MediaDB.Backend.PDFHandler.Process">
+            <summary>
+            Collects metadata about the file
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.SVGHandler">
+            <summary>
+            Handler for SVG files
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.SVGHandler.#ctor(System.IO.FileInfo,MediaDB.MediaType)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="file">
+            A <see cref="T:System.IO.FileInfo" /></param>
+            <param name="mediatype">
+            A <see cref="T:MediaDB.MediaType" /></param>
+        </member>
+        <member name="M:MediaDB.Backend.SVGHandler.Process">
+            <summary>
+            Collects metadata about the file and generates previews
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.IDBFile">
+            <summary>
+            Interface for database related files
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.IDBFile.Save">
+            <summary>
+            Save to DB. Should handle both inserts and updates
+            </summary>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.IDBFile.SetFromSql(MySql.Data.MySqlClient.MySqlDataReader)">
+            <summary>
+            Populate the object from database record
+            </summary>
+            <param name="reader">
+            A <see cref="T:MySql.Data.MySqlClient.MySqlDataReader" /></param>
+        </member>
+        <member name="T:MediaDB.Backend.MediaFile">
+            <summary>
+            Media file
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Id">
+            <summary>
+            Database id of the file
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Name">
+            <summary>
+            Filename
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.FullName">
+            <summary>
+            Full path
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.DirectoryId">
+            <summary>
+            ID of directory this file belongs to
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Title">
+            <summary>
+            File title
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Description">
+            <summary>
+            File description
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Mimetype">
+            <summary>
+            File mimetype
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Copyright">
+            <summary>
+            Copyright info
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Width">
+            <summary>
+            File width
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Height">
+            <summary>
+            File height
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Size">
+            <summary>
+            File size
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Exif">
+            <summary>
+            Raw exif info
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Keywords">
+            <summary>
+            Keywords
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Resolution">
+            <summary>
+            Image resolution
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Created">
+            <summary>
+            File creation time
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Modified">
+            <summary>
+            File modification time
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Previews">
+            <summary>
+            Array of preview images
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.MediaFile.Categories">
+            <summary>
+            Array of category id's this file belongs to
+            </summary>
+        </member>
+        <member name="P:MediaDB.Backend.MediaFile.Sha1Hash">
+            <summary>
+            A SHA1 hash of the file content
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.MediaFile.computeFileHash">
+            <summary>
+            Compute a hash of the file content
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.MediaFile.SetFromSql(MySql.Data.MySqlClient.MySqlDataReader)">
+            <summary>
+            Populate object from database record
+            </summary>
+            <param name="reader">
+            A <see cref="T:MySql.Data.MySqlClient.MySqlDataReader" /></param>
+        </member>
+        <member name="M:MediaDB.Backend.MediaFile.Save">
+            <summary>
+            Save to database. Inserts if new, updates otherwise
+            </summary>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Backend.MediaFile.ToString">
+            <summary>
+            String casting method
+            </summary>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.MediaFile.Dispose">
+            <summary>
+            Disposes this object
+            </summary>
+        </member>
+        <member name="T:MediaDB.Backend.Directory">
+            <summary>
+            Directory in database
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Directory.Id">
+            <summary>
+            MySQL id
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Directory.ParentId">
+            <summary>
+            Parent directory id
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Directory.BasePathId">
+            <summary>
+            Id of base path this directory belongs to
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Directory.Name">
+            <summary>
+            Directory name
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Directory.FullName">
+            <summary>
+            Directory path
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.Directory.ShortName">
+            <summary>
+            Path minus base path
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.Directory.FromSql(MySql.Data.MySqlClient.MySqlDataReader)">
+            <summary>
+            Creates and populates an object from a sql record
+            </summary>
+            <param name="reader">
+            </param>
+            <returns>
+            </returns>
+        </member>
+        <member name="M:MediaDB.Backend.Directory.Save">
+            <summary>
+            Save to database
+            </summary>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Backend.Directory.SetFromSql(MySql.Data.MySqlClient.MySqlDataReader)">
+            <summary>
+            Populate object from database record
+            </summary>
+            <param name="reader">
+            A <see cref="T:MySql.Data.MySqlClient.MySqlDataReader" /></param>
+        </member>
+        <member name="T:MediaDB.Backend.PreviewFile">
+            <summary>
+            Preview file
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Id">
+            <summary>
+            Database ID
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.FileId">
+            <summary>
+            Preview of file
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Mimetype">
+            <summary>
+            Preview's mimetype
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Name">
+            <summary>
+            Preview identifier name
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Width">
+            <summary>
+            Width of preview
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Height">
+            <summary>
+            Height of preview
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Size">
+            <summary>
+            File size
+            </summary>
+        </member>
+        <member name="F:MediaDB.Backend.PreviewFile.Data">
+            <summary>
+            Image data
+            </summary>
+        </member>
+        <member name="M:MediaDB.Backend.PreviewFile.Save">
+            <summary>
+            Save to database
+            </summary>
+            <returns>
+            A <see cref="T:System.Boolean" /></returns>
+        </member>
+        <member name="M:MediaDB.Backend.PreviewFile.SetFromSql(MySql.Data.MySqlClient.MySqlDataReader)">
+            <summary>
+            Populate object from database record
+            </summary>
+            <param name="reader">
+            A <see cref="T:MySql.Data.MySqlClient.MySqlDataReader" /></param>
+        </member>
+        <member name="M:MediaDB.Backend.PreviewFile.Dispose">
+            <summary>
+            Disposes this object
+            </summary>
+        </member>
+        <member name="T:FileProcessor">
+            <summary>
+            Async method template for processing a file
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-16"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>MediaDB.Manager</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" type="text/css" href="assets/docgen.css" />
+  </head>
+  <body>
+    <div id="wrapper">
+      <div id="header">
+        <h1>
+          <a href="index.html">MediaDB</a>
+        </h1>
+        <hr />
+      </div>
+      <div id="body">
+        <div id="menu" xmlns="">
+          <ul>
+            <li>
+              <a href="MediaDB.MainClass.html">MediaDB.MainClass</a>
+            </li>
+            <li class="selected">
+              <a href="MediaDB.Manager.html">MediaDB.Manager</a>
+            </li>
+            <li>
+              <a href="MediaDB.DBInfo.html">MediaDB.DBInfo</a>
+            </li>
+            <li>
+              <a href="MediaDB.BasePath.html">MediaDB.BasePath</a>
+            </li>
+            <li>
+              <a href="MediaDB.MediaType.html">MediaDB.MediaType</a>
+            </li>
+            <li>
+              <a href="MediaDB.Preview.html">MediaDB.Preview</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Scanner.html">MediaDB.Backend.Scanner</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Indexer.html">MediaDB.Backend.Indexer</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.CrawlerFile.html">MediaDB.Backend.CrawlerFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.DB.html">MediaDB.DB</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.EXIFextractor.html">Goheer.EXIF.EXIFextractor</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.translation.html">Goheer.EXIF.translation</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.Rational.html">Goheer.EXIF.Rational</a>
+            </li>
+            <li>
+              <a href="MediaDB.Gfx.html">MediaDB.Gfx</a>
+            </li>
+            <li>
+              <a href="MediaDB.Tools.html">MediaDB.Tools</a>
+            </li>
+            <li>
+              <a href="MediaDB.XML.html">MediaDB.XML</a>
+            </li>
+            <li>
+              <a href="MediaDB.Log.html">MediaDB.Log</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.FileHandler.html">MediaDB.Backend.FileHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.IMGHandler.html">MediaDB.Backend.IMGHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.EPSHandler.html">MediaDB.Backend.EPSHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.PDFHandler.html">MediaDB.Backend.PDFHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.SVGHandler.html">MediaDB.Backend.SVGHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.IDBFile.html">MediaDB.Backend.IDBFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.MediaFile.html">MediaDB.Backend.MediaFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Directory.html">MediaDB.Backend.Directory</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.PreviewFile.html">MediaDB.Backend.PreviewFile</a>
+            </li>
+            <li>
+              <a href="FileProcessor.html">FileProcessor</a>
+            </li>
+          </ul>
+        </div>
+        <div id="content" xmlns="">
+          <div class="class">
+            <div class="definition">
+              <h1>MediaDB.Manager</h1>
+              <p>
+            Static class for reading the config file
+            </p>
+            </div>
+            <div class="summary">
+              <div class="members">
+                <h2 class="header">» Properties</h2>
+                <div class="member" id="P_MediaDB_Manager_File">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">File</span></h3>
+                  <p>
+            The path to the config file
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_DatabaseInfo">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">DatabaseInfo</span></h3>
+                  <p>
+            Database connection info, host, db, user, password
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_BasePaths">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">BasePaths</span></h3>
+                  <p>
+            List of paths to index/scan
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_MediaTypes">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">MediaTypes</span></h3>
+                  <p>
+            List of file types to collect
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_Previews">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">Previews</span></h3>
+                  <p>
+            Array of preview templates
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_Directories">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">Directories</span></h3>
+                  <p>
+            List of directories
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_PreviewMinWidth">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">PreviewMinWidth</span></h3>
+                  <p>
+            The width of the smallest preview template
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_PreviewMinHeight">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">PreviewMinHeight</span></h3>
+                  <p>
+            The height of the smallest preview template
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_Threads">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">Threads</span></h3>
+                  <p>
+            Number of concurrent threads to run when indexing
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_TmpDir">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">TmpDir</span></h3>
+                  <p>
+            Path to the applications temp directory
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_DbCon">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">DbCon</span></h3>
+                  <p>
+            The database connection
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_PreviewQuality">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">PreviewQuality</span></h3>
+                  <p>
+            Quality of preview images
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Manager_MaxBytes">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">MaxBytes</span></h3>
+                  <p>
+            Max number of bytes the application can consume during indexing
+            </p>
+                </div>
+                <div class="member last" id="P_MediaDB_Manager_FileIndex">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">FileIndex</span></h3>
+                  <p>
+            List of all files
+            </p>
+                </div>
+              </div>
+              <div class="members">
+                <h2 class="header">» Variables</h2>
+                <div class="member" id="F_MediaDB_Manager_mutex">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">mutex</span></h3>
+                  <p>
+            Global mutex object
+            </p>
+                </div>
+                <div class="member last" id="F_MediaDB_Manager_NullDate">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">NullDate</span></h3>
+                  <p>
+            Null date
+            </p>
+                </div>
+              </div>
+              <div class="members">
+                <h2 class="header">» Methods</h2>
+                <div class="member" id="M_MediaDB_Manager_Init_System_String_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">Init</span>(<span class="data-type">System.String</span> <span class="param-name">file</span>);</h3>
+                  <p>
+            Read the config file and populate this class
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Manager_Init_System_String_-file">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">file</span></div>
+                  <div class="method-info">
+                    <span class="label">Returns: </span>
+            A <span class="code-element">System.Boolean</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Manager_GetDirectory_System_String_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">GetDirectory</span>(<span class="data-type">System.String</span> <span class="param-name">path</span>);</h3>
+                  <p>
+            Returns the directory object for <a href="#M_MediaDB_Manager_GetDirectory_System_String_-path">path</a> if
+            it exists.
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Manager_GetDirectory_System_String_-path">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">path</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Manager_GetMediaType_System_IO_FileInfo_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">GetMediaType</span>(<span class="data-type">System.IO.FileInfo</span> <span class="param-name">file</span>);</h3>
+                  <p>
+            Returns the media type for the given file or null if non is found
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Manager_GetMediaType_System_IO_FileInfo_-file">Param: </span>
+                    <span class="data-type">System.IO.FileInfo</span> <span class="param-name">file</span></div>
+                  <div class="method-info">
+                    <span class="label">Returns: </span>
+            A <a href="MediaDB.Mediaype.html" class="code-element">MediaDB.Mediaype</a></div>
+                </div>
+                <div class="member" id="M_MediaDB_Manager_GetMediaFile_System_String_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">GetMediaFile</span>(<span class="data-type">System.String</span> <span class="param-name">fullname</span>);</h3>
+                  <p>
+            Get media file for <a href="#M_MediaDB_Manager_GetMediaFile_System_String_-fullname">fullname</a>.
+            If it exists in the database the media file object will be
+            populated. Otherwise an empty <a href="MediaDB.Backend.MediaFile.html" class="code-element">MediaDB.Backend.MediaFile</a> object will
+            be returned.
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Manager_GetMediaFile_System_String_-fullname">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">fullname</span></div>
+                </div>
+                <div class="member last" id="M_MediaDB_Manager_Dispose">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Manager</span>.<span class="property-property">Dispose</span>();</h3>
+                  <p>
+            Dispose, close db e t c.
+            </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br class="clear" xmlns="" />
+      </div>
+    </div>
+  </body>
+</html>

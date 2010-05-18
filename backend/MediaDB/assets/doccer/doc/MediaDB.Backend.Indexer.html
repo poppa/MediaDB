@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-16"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>MediaDB.Backend.Indexer</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" type="text/css" href="assets/docgen.css" />
+  </head>
+  <body>
+    <div id="wrapper">
+      <div id="header">
+        <h1>
+          <a href="index.html">MediaDB</a>
+        </h1>
+        <hr />
+      </div>
+      <div id="body">
+        <div id="menu" xmlns="">
+          <ul>
+            <li>
+              <a href="MediaDB.MainClass.html">MediaDB.MainClass</a>
+            </li>
+            <li>
+              <a href="MediaDB.Manager.html">MediaDB.Manager</a>
+            </li>
+            <li>
+              <a href="MediaDB.DBInfo.html">MediaDB.DBInfo</a>
+            </li>
+            <li>
+              <a href="MediaDB.BasePath.html">MediaDB.BasePath</a>
+            </li>
+            <li>
+              <a href="MediaDB.MediaType.html">MediaDB.MediaType</a>
+            </li>
+            <li>
+              <a href="MediaDB.Preview.html">MediaDB.Preview</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Scanner.html">MediaDB.Backend.Scanner</a>
+            </li>
+            <li class="selected">
+              <a href="MediaDB.Backend.Indexer.html">MediaDB.Backend.Indexer</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.CrawlerFile.html">MediaDB.Backend.CrawlerFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.DB.html">MediaDB.DB</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.EXIFextractor.html">Goheer.EXIF.EXIFextractor</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.translation.html">Goheer.EXIF.translation</a>
+            </li>
+            <li>
+              <a href="Goheer.EXIF.Rational.html">Goheer.EXIF.Rational</a>
+            </li>
+            <li>
+              <a href="MediaDB.Gfx.html">MediaDB.Gfx</a>
+            </li>
+            <li>
+              <a href="MediaDB.Tools.html">MediaDB.Tools</a>
+            </li>
+            <li>
+              <a href="MediaDB.XML.html">MediaDB.XML</a>
+            </li>
+            <li>
+              <a href="MediaDB.Log.html">MediaDB.Log</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.FileHandler.html">MediaDB.Backend.FileHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.IMGHandler.html">MediaDB.Backend.IMGHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.EPSHandler.html">MediaDB.Backend.EPSHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.PDFHandler.html">MediaDB.Backend.PDFHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.SVGHandler.html">MediaDB.Backend.SVGHandler</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.IDBFile.html">MediaDB.Backend.IDBFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.MediaFile.html">MediaDB.Backend.MediaFile</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.Directory.html">MediaDB.Backend.Directory</a>
+            </li>
+            <li>
+              <a href="MediaDB.Backend.PreviewFile.html">MediaDB.Backend.PreviewFile</a>
+            </li>
+            <li>
+              <a href="FileProcessor.html">FileProcessor</a>
+            </li>
+          </ul>
+        </div>
+        <div id="content" xmlns="">
+          <div class="class">
+            <div class="definition">
+              <h1>MediaDB.Backend.Indexer</h1>
+              <p>
+            Class for indexing a directory path. Scans recursively through the
+            directory.
+            </p>
+            </div>
+            <div class="summary">
+              <div class="members">
+                <h2 class="header">» Properties</h2>
+                <div class="member" id="P_MediaDB_Backend_Indexer_Path">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">Path</span></h3>
+                  <p>
+            The root path
+            </p>
+                </div>
+                <div class="member" id="P_MediaDB_Backend_Indexer_Files">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">Files</span></h3>
+                  <p>
+            Array of found files
+            </p>
+                </div>
+                <div class="member last" id="P_MediaDB_Backend_Indexer_Directories">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">Directories</span></h3>
+                  <p>
+            List of collected directories
+            </p>
+                </div>
+              </div>
+              <div class="members">
+                <h2 class="header">» Variables</h2>
+                <div class="member" id="F_MediaDB_Backend_Indexer_slots">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">slots</span></h3>
+                  <p>
+            Number of concurrent threads to use
+            </p>
+                </div>
+                <div class="member" id="F_MediaDB_Backend_Indexer_taken">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">taken</span></h3>
+                  <p>
+            Number of used threads
+            </p>
+                </div>
+                <div class="member" id="F_MediaDB_Backend_Indexer_maxbytes">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">maxbytes</span></h3>
+                  <p>
+            Max number of bytes to allocate
+            </p>
+                </div>
+                <div class="member last" id="F_MediaDB_Backend_Indexer_scanner">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">scanner</span></h3>
+                  <p>
+            The scanner object owning this object
+            </p>
+                </div>
+              </div>
+              <div class="members">
+                <h2 class="header">» Methods</h2>
+                <div class="member" id="M_MediaDB_Backend_Indexer__ctor_MediaDB_BasePath_MediaDB_Backend_Scanner_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-class">Backend</span>.<span class="property-property">Indexer</span>(<a href="MediaDB.BasePath.html" class="data-type">MediaDB.BasePath</a> <span class="param-name">path</span>, <a href="MediaDB.Backend.Scanner.html" class="data-type">MediaDB.Backend.Scanner</a> <span class="param-name">scanner</span>);</h3>
+                  <p>
+            Contructor
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_Indexer__ctor_MediaDB_BasePath_MediaDB_Backend_Scanner_-path">Param: </span>
+                    <a href="MediaDB.BasePath.html" class="data-type">MediaDB.BasePath</a> <span class="param-name">path</span></div>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_Indexer__ctor_MediaDB_BasePath_MediaDB_Backend_Scanner_-scanner">Param: </span>
+                    <a href="MediaDB.Backend.Scanner.html" class="data-type">MediaDB.Backend.Scanner</a> <span class="param-name">scanner</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_freeSlot">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">freeSlot</span>();</h3>
+                  <p>
+            Frees a slot for a thread
+            </p>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_isBusy_MediaDB_Backend_CrawlerFile_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">isBusy</span>();</h3>
+                  <p>
+            Can we release a new thread
+            </p>
+                  <div class="method-info">
+                    <span class="label">Returns: </span>
+            A <span class="code-element">System.Boolean</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_Start">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">Start</span>();</h3>
+                  <p>
+            Start indexing
+            </p>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_onProcess_System_IAsyncResult_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">onProcess</span>();</h3>
+                  <p>
+            Callback for when a file has been processed
+            </p>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_Processor_MediaDB_Backend_CrawlerFile_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">Processor</span>(<a href="MediaDB.Backend.CrawlerFile.html" class="data-type">MediaDB.Backend.CrawlerFile</a> <span class="param-name">cf</span>);</h3>
+                  <p>
+            Async method for processing files
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_Indexer_Processor_MediaDB_Backend_CrawlerFile_-cf">Param: </span>
+                    <a href="MediaDB.Backend.CrawlerFile.html" class="data-type">MediaDB.Backend.CrawlerFile</a> <span class="param-name">cf</span></div>
+                  <div class="method-info">
+                    <span class="label">Returns: </span>
+            A <span class="code-element">System.Boolean</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_Dispose">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">Dispose</span>();</h3>
+                  <p>
+            Disposes the object
+            </p>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_findParentDirectory_System_IO_DirectoryInfo_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">findParentDirectory</span>(<span class="data-type">System.IO.DirectoryInfo</span> <span class="param-name">dir</span>);</h3>
+                  <p>
+            Finds the parent firectory for <a href="#M_MediaDB_Backend_Indexer_findParentDirectory_System_IO_DirectoryInfo_-dir">dir</a></p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_Indexer_findParentDirectory_System_IO_DirectoryInfo_-dir">Param: </span>
+                    <span class="data-type">System.IO.DirectoryInfo</span> <span class="param-name">dir</span></div>
+                </div>
+                <div class="member" id="M_MediaDB_Backend_Indexer_getDirectoryShortName_System_String_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">getDirectoryShortName</span>(<span class="data-type">System.String</span> <span class="param-name">path</span>);</h3>
+                  <p>
+            Returns the directory name of <a href="#M_MediaDB_Backend_Indexer_getDirectoryShortName_System_String_-path">path</a>
+            minus the the base path
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_Indexer_getDirectoryShortName_System_String_-path">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">path</span></div>
+                </div>
+                <div class="member last" id="M_MediaDB_Backend_Indexer_crawl_System_String_">
+                  <h3>
+                    <span class="property-namespace">MediaDB</span>.<span class="property-namespace">Backend</span>.<span class="property-class">Indexer</span>.<span class="property-property">crawl</span>(<span class="data-type">System.String</span> <span class="param-name">path</span>);</h3>
+                  <p>
+            Crawl directory for files
+            </p>
+                  <div class="method-info">
+                    <span class="label" id="M_MediaDB_Backend_Indexer_crawl_System_String_-path">Param: </span>
+                    <span class="data-type">System.String</span> <span class="param-name">path</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br class="clear" xmlns="" />
+      </div>
+    </div>
+  </body>
+</html>
