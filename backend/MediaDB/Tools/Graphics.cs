@@ -17,6 +17,7 @@
  *
  * Author:
  * 	Pontus Östlund <pontus@poppa.se>
+ *  Martin Pedersen
  */
 
 using System;
@@ -56,6 +57,26 @@ namespace MediaDB
 		}
 
 		/// <summary>
+		/// Scale with constraint proportions square edit
+		/// </summary>
+		/// <param name="org_x"></param>
+		/// <param name="org_y"></param>
+		/// <param name="max_x"></param>
+		/// <param name="max_y"></param>
+		/// <returns></returns>
+		public static int[] GetConstraintsSq(int org_x, int org_y,
+		                                     int max_x, int max_y)
+		{
+			int[] r = new int[2];
+			float s = Math.Max((float)max_x / (float)org_x,
+			                   (float)max_y / (float)org_y);
+			r[0] = (int)Math.Round(s * org_x);
+			r[1] = (int)Math.Round(s * org_y);
+	
+			return r;
+		}
+
+		/// <summary>
 		/// Scale image to <paramref name="width"/> and <paramref name="height"/>
 		/// </summary>
 		/// <param name="img"></param>
@@ -80,6 +101,33 @@ namespace MediaDB
 		}
 
 		/// <summary>
+		/// Scale image to <paramref name="side"/>
+		/// and squarify
+		/// </summary>
+		/// <param name="img"></param>
+		/// <param name="side"></param>
+		/// <returns></returns>
+		public static Bitmap ScaleImageSq(Bitmap img, int side)
+		{
+			int newside = Math.Min(img.Width, img.Height);
+			int oldx = (img.Width - newside) / 2;
+			int oldy = (img.Height - newside) / 2;
+			Bitmap bmp = new Bitmap(img, side, side);
+			bmp.SetResolution(72, 72);
+			Graphics g = Graphics.FromImage(bmp);
+			g.InterpolationMode =
+			System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+			g.DrawImage(img,
+			            new Rectangle(0, 0, side, side),
+			            new Rectangle(oldx, oldy, newside, newside),
+			            GraphicsUnit.Pixel);
+
+			g.Dispose();
+			g = null;
+			return bmp;
+		}
+
+		/// <summary>
 		/// Returns a <see cref="ImageCodecInfo"/> info for
 		/// <paramref name="mimetype"/> that can be used for compression settings.
 		/// </summary>
@@ -87,10 +135,9 @@ namespace MediaDB
 		/// <returns></returns>
 		public static ImageCodecInfo GetEncoderInfo(string mimetype)
 		{
-			foreach (ImageCodecInfo ici in ImageCodecInfo.GetImageDecoders()) {
-			if (ici.MimeType == mimetype)
-				return ici;
-			}
+			foreach (ImageCodecInfo ici in ImageCodecInfo.GetImageDecoders())
+				if (ici.MimeType == mimetype)
+					return ici;
 
 			return null;
 		}
@@ -134,6 +181,39 @@ namespace MediaDB
 		}
 
 		/// <summary>
+		/// Resolvs image metadata via ImageMagick
+		/// </summary>
+		/// <param name="path">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="List<System.String>"/>
+		/// </returns>
+		public static List<string> iMagickMetadata(string path)
+		{
+	    string tmp = Tools.TmpPath() + ".txt";
+	    string args = String.Format("\"{0}\" 8BIMTEXT:\"{1}\"", path, tmp);
+	    List<string> keywords = new List<string>();
+	    byte[] bytes = iMagickConvert(args, tmp);
+
+	    if (bytes != null) {
+        Encoding enc = Encoding.GetEncoding("ISO-8859-1");
+        // System.Text.ASCIIEncoding enc = new ASCIIEncoding();
+				string str = enc.GetString(bytes);
+				int idx;
+				int endidx;
+				// Look for this... 2#25#Keyword=
+				while ((idx = str.IndexOf("2#25#Keyword=")) != -1) {
+					str = str.Substring(idx + 14);
+					endidx = str.IndexOf("\"");
+					keywords.Add(str.Substring(0, endidx));
+				}
+			}
+
+			return keywords;
+		}
+
+		/// <summary>
 		/// Execute ImageMagicks "convert".
 		/// </summary>
 		/// <param name="args">
@@ -154,7 +234,7 @@ namespace MediaDB
 #if LINUX
 			proc.StartInfo.FileName = "convert";
 #else
-			proc.StartInfo.FileName = @"C:\Program Files\ImageMagick-6.6.1-Q16\convert.exe";
+			proc.StartInfo.FileName = @"C:\Program Files\ImageMagick-6.6.3-Q16\convert.exe";
 			//proc.StartInfo.FileName = "\"convert.exe\"";
 #endif
 			proc.StartInfo.Arguments = args;
@@ -184,7 +264,8 @@ namespace MediaDB
 				return buf;
 			}
 			else {
-				Log.Warning("Unable to \"convert\": {0}\n### {1}\n", args, error);
+				if (!error.Contains("no 8BIM data is available"))
+					Log.Warning("Unable to \"convert\": {0}\n### {1}\n", args, error);
 			}
 
 			proc.Close();

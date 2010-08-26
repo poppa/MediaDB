@@ -1,3 +1,24 @@
+/* Database.cs
+ *
+ * Copyright (C) 2010  Pontus Östlund
+ *
+ * This library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author:
+ * 	Pontus Östlund <pontus@poppa.se>
+ */
+
 using System;
 using System.Collections.Generic;
 //using System.Linq;
@@ -51,6 +72,25 @@ namespace MediaDB
 		                               params MySqlParameter[] args)
 		{
 			try {
+				/*
+				using (MySqlConnection mycon = Manager.DbCon.Clone()) {
+					mycon.Open();
+					using (MySqlCommand cmd = mycon.CreateCommand()) {
+						cmd.CommandText = sql;
+
+						if (args.Length > 0)
+							foreach (object o in args)
+								cmd.Parameters.Add(o);
+
+						rd = cmd.ExecuteReader();
+						rd.
+					}
+					mycon.Close();
+				}
+				*/
+
+				Manager.mutex.WaitOne();
+
 				MySqlCommand cmd = Manager.DbCon.CreateCommand();
 				cmd.CommandText = sql;
 
@@ -61,6 +101,8 @@ namespace MediaDB
 				rd = cmd.ExecuteReader();
 				cmd.Dispose();
 				cmd = null;
+
+				Manager.mutex.ReleaseMutex();
 
 				return true;
 			}
@@ -86,17 +128,20 @@ namespace MediaDB
 		                               params MySqlParameter[] args)
 		{
 			try {
-				MySqlCommand cmd = Manager.DbCon.CreateCommand();
-				cmd.CommandText = sql;
+				using (MySqlConnection mycon = Manager.DbCon.Clone()) {
+					mycon.Open();
+					using (MySqlCommand cmd = mycon.CreateCommand()) {
+						cmd.CommandText = sql;
 
-				if (args.Length > 0)
-					foreach (MySqlParameter p in args)
-						cmd.Parameters.Add(p);
+						if (args.Length > 0)
+							foreach (MySqlParameter p in args)
+								cmd.Parameters.Add(p);
 
-				cmd.ExecuteNonQuery();
-				id = cmd.LastInsertedId;
-				cmd.Dispose();
-				cmd = null;
+						cmd.ExecuteNonQuery();
+						id = cmd.LastInsertedId;
+					}
+					mycon.Close();
+				}
 			}
 			catch (Exception e) {
 				Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
@@ -116,21 +161,19 @@ namespace MediaDB
 		public static bool Query(string sql, params MySqlParameter[] args)
 		{
 			try {
-				MySqlConnection mycon = Manager.DbCon.Clone();
-				mycon.Open();
-				MySqlCommand cmd = mycon.CreateCommand();
-				cmd.CommandText = sql;
+				using (MySqlConnection mycon = Manager.DbCon.Clone()) {
+					mycon.Open();
+					using (MySqlCommand cmd = mycon.CreateCommand()) {
+						cmd.CommandText = sql;
 
-				if (args.Length > 0)
-					foreach (MySqlParameter p in args)
-						cmd.Parameters.Add(p);
+						if (args.Length > 0)
+							foreach (MySqlParameter p in args)
+								cmd.Parameters.Add(p);
 
-				cmd.ExecuteNonQuery();
-				cmd.Dispose();
-				cmd = null;
-				mycon.Close();
-				mycon.Dispose();
-				mycon = null;
+						cmd.ExecuteNonQuery();
+					}
+					mycon.Close();
+				}
 			}
 			catch (Exception e) {
 				Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
@@ -152,6 +195,161 @@ namespace MediaDB
 		public static bool IsNull(object col)
 		{
 			return col == DBNull.Value;
+		}
+	}
+
+	/// <summary>
+	///  <para>Database manager object.</para>
+	///  <para>This will clone the <see cref="Manager.DbCon">database connection</see>
+	///   in <see cref="Manager" />.
+	///  </para>
+	/// </summary>
+	public class DbManager : IDisposable
+	{
+		/// <summary>
+		/// Database connection object. This is a clone of
+		/// <see cref="Manager.DbCon" />.
+		/// </summary>
+		public MySqlConnection Connection { get; private set; }
+
+		/// <summary>
+		/// Sql data reader object
+		/// </summary>
+		public MySqlDataReader DataReader { get; private set; }
+
+		/// <summary>
+		/// Creates a new DbManager
+		/// </summary>
+		public DbManager()
+		{
+			Connection = Manager.DbCon.Clone();
+			Connection.Open();
+		}
+
+		private bool dontClose = false;
+
+		/// <summary>
+		/// Creates a new DbManager and sets the connection object to
+		/// the one given as <paramref name="dbcon"/>. NOTE! This object
+		/// should be an open connection
+		/// </summary>
+		public DbManager(MySqlConnection dbcon)
+		{
+			Connection = dbcon;
+			dontClose = true;
+		}
+
+		/// <summary>
+		/// Performs a database query
+		/// </summary>
+		/// <param name="sql"></param>
+		/// <param name="args"></param>
+		/// <returns></returns>
+		public bool QueryReader(string sql, params MySqlParameter[] args)
+		{
+			try {
+				if (DataReader != null) {
+					if (!DataReader.IsClosed)
+						DataReader.Close();
+					DataReader.Dispose();
+				}
+
+				using (MySqlCommand cmd = Connection.CreateCommand()) {
+					cmd.CommandText = sql;
+
+					if (args.Length > 0)
+						foreach (object o in args)
+							cmd.Parameters.Add(o);
+
+					DataReader = cmd.ExecuteReader();
+				}
+
+				return true;
+			}
+			catch (Exception e) {
+				Log.Debug("DB error: {0} {1}\n", e.Message, e.StackTrace);
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Plain "NonQuery" query. No query result is expected. Query.
+		/// </summary>
+		/// <param name="sql"></param>
+		/// <param name="args"></param>
+		/// <returns></returns>
+		public bool Query(string sql, params MySqlParameter[] args)
+		{
+			try {
+				using (MySqlCommand cmd = Connection.CreateCommand()) {
+					cmd.CommandText = sql;
+
+					if (args.Length > 0)
+						foreach (MySqlParameter p in args)
+							cmd.Parameters.Add(p);
+
+					cmd.ExecuteNonQuery();
+				}
+			}
+			catch (Exception e) {
+				Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Query database with insert statement.
+		/// </summary>
+		/// <param name="id">Will be populated with the insert ID.</param>
+		/// <param name="sql">The SQL query</param>
+		/// <param name="args">Arbitrary replacement parameters for 
+		///  <paramref name="sql"/>
+		/// </param>
+		/// <returns><see cref="System.Boolean"/></returns>
+		public bool QueryInsert(out long id, string sql,
+		                        params MySqlParameter[] args)
+		{
+			try {
+				using (MySqlCommand cmd = Connection.CreateCommand()) {
+					cmd.CommandText = sql;
+
+					if (args.Length > 0)
+						foreach (MySqlParameter p in args)
+							cmd.Parameters.Add(p);
+
+					cmd.ExecuteNonQuery();
+					id = cmd.LastInsertedId;
+				}
+			}
+			catch (Exception e) {
+				Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+				id = 0;
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Disposes the object.
+		/// </summary>
+		public void Dispose()
+		{
+			if (DataReader != null) {
+				if (!DataReader.IsClosed)
+					DataReader.Close();
+				DataReader.Dispose();
+				DataReader = null;
+			}
+
+			if (!dontClose && Connection != null) {
+				Connection.Close();
+				Connection.Dispose();
+				Connection = null;
+			}
 		}
 	}
 }

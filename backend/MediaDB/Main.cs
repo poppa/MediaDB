@@ -49,13 +49,18 @@ namespace MediaDB
 			Console.Write(HEADER, start);
 
 #if DEBUG
+			string cfg = @"C:\Users\marped\tmp\config.xml";
+			Log.LogFile = @"C:\Users\marped\tmp\mediadb.log";
+			//string cfg = @"C:\test\bonkers\cfg\config.xml";
+			//Log.LogFile = @"C:\test\bonkers\cfg\mediadb.log";
 #if LINUX
 			var t = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 			Log.LogFile = t + "/temp/mediadb.log";
-			string cfg  = "/home/pontus/temp/config.xml";
+			cfg  = t + "/temp/config.xml";
 #else
-			Log.LogFile = Path.Combine(@"\tmp", "mediadb.log");
-			string cfg = @"\tmp\config.xml";
+			//Log.LogFile = Path.Combine(@"\tmp", "mediadb.log");
+      //Log.LogFile = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + @"\tmp\mediadb.log";
+			//string cfg = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + @"\tmp\config.xml";
 #endif
 #else
 			string cfg = args[0];

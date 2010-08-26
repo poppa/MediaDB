@@ -57,11 +57,8 @@ namespace MediaDB.Backend
 		/// A SHA1 hash of the file content
 		/// </summary>
 		public string Sha1Hash {
-			get
-			{
-				if (sha1Hash == null)
-					computeFileHash();
-
+			get {
+				if (sha1Hash == null) computeFileHash();
 				return sha1Hash;
 			}
 		}
@@ -172,6 +169,19 @@ namespace MediaDB.Backend
 		}
 
 		/// <summary>
+		/// Creates and populates a <see cref="MediaFile" /> object
+		/// from the datareader <paramref name="rd"/>
+		/// </summary>
+		/// <param name="rd"></param>
+		/// <returns></returns>
+		public static MediaFile FromSql(MySqlDataReader rd)
+		{
+			MediaFile m = new MediaFile();
+			m.SetFromSql(rd);
+			return m;
+		}
+
+		/// <summary>
 		/// Populate object from database record
 		/// </summary>
 		/// <param name="reader">
@@ -213,6 +223,18 @@ namespace MediaDB.Backend
 						break;
 				}
 			}
+
+			if (Id > 0) {
+				using (var db = new DbManager(Manager.DbCon)) {
+					var sql = "SELECT * FROM `preview` WHERE file_id=@id";
+					if (db.QueryReader(sql, DB.Param("id", Id))) {
+						while (db.DataReader.NextResult()) {
+							db.DataReader.Read();
+							Previews.Add(PreviewFile.FromSql(db.DataReader));
+						}
+					}
+				}
+			}
 		}
 
 		/// <summary>
@@ -237,8 +259,8 @@ namespace MediaDB.Backend
 				object mddate = null;
 				if (Modified != Manager.NullDate)
 					mddate = Modified;
-
-				if (DB.QueryInsert(out tmpid, sql,
+				var db = new DbManager(Manager.DbCon);
+				if (db.QueryInsert(out tmpid, sql,
 				                   DB.Param("name", Name),
 				                   DB.Param("fullname", FullName),
 				                   DB.Param("directory_id", DirectoryId),
@@ -257,6 +279,12 @@ namespace MediaDB.Backend
 													 DB.Param("sha1_hash", Sha1Hash)))
 				{
 					Id = tmpid;
+
+          SaveKeywords(Id, Keywords);
+
+					// Update the file index in Manager
+					Manager.AddToFileIndex(FullName);
+
 					foreach (PreviewFile f in Previews) {
 						f.FileId = Id;
 						if (!f.Save()) {
@@ -265,10 +293,12 @@ namespace MediaDB.Backend
 						}
 					}
 
+					db.Dispose();
 					return true;
 				}
 				else {
 					Log.Debug("Failed inserting {0} into database!\n", FullName);
+					db.Dispose();
 					return false;
 				}
 			}
@@ -277,10 +307,12 @@ namespace MediaDB.Backend
 				sha1Hash = null;
 
 				DB.Query("DELETE FROM `preview` WHERE file_id=@id",
-								 DB.Param("@id", Id));
+								 DB.Param("id", Id));
 
 				string sql = "UPDATE `file` SET "           +
 										 " sha1_hash=@sha1_hash,"       +
+										 " name=@name,"                 +
+										 " fullname=@fullname,"         +
 										 " directory_id=@directory_id," +
 										 " mimetype=@mimetype,"         +
 										 " title=@title,"               +
@@ -295,6 +327,8 @@ namespace MediaDB.Backend
 										 "WHERE id=@id";
 
 				if (DB.Query(sql, DB.Param("sha1_hash", Sha1Hash),
+				                  DB.Param("name", Name),
+				                  DB.Param("fullname", FullName),
 				                  DB.Param("directory_id", DirectoryId),
 													DB.Param("mimetype", Mimetype),
 													DB.Param("title", Title),
@@ -307,7 +341,13 @@ namespace MediaDB.Backend
 													DB.Param("modified", Modified),
 													DB.Param("keywords", Keywords),
 													DB.Param("id", Id))) 
-				{
+				 {
+          if (Previews.Count == 0) {
+            // var fi = new FileInfo(FullName);
+            // MediaType mt = Manager.GetMediaType(fi);
+            // FileHandler fh = Manager.GetFileHandler(fi, mt);
+            // fh.
+          }
 					foreach (PreviewFile f in Previews) {
 						f.FileId = Id;
 						if (!f.Save()) {
@@ -323,6 +363,54 @@ namespace MediaDB.Backend
 			}
 		}
 
+		public void DeleteFromDB()
+		{
+	    DB.Query("DELETE FROM `preview` WHERE file_id=@id",
+	             DB.Param("@id", Id));
+	    DB.Query("DELETE FROM `file` WHERE id=@id",
+	             DB.Param("@id", Id));
+		}
+
+		private void SaveKeywords(long Id, string Keywords)
+		{
+	    if (Keywords != null) {
+        string[] keys = Keywords.Split(',');
+
+        foreach (string key in keys) {
+          string lowCaseKey = key.ToLower();
+          int keyword_id = -1;
+
+          using (var db = new DbManager(Manager.DbCon)) {
+            string sql = "SELECT id FROM `keywords` WHERE keyword=@keyword";
+            db.QueryReader(sql, DB.Param("keyword", lowCaseKey));
+            if (db.DataReader.HasRows) {
+              db.DataReader.Read();
+              keyword_id = (int)db.DataReader.GetValue(0);
+            }
+          }
+
+          if (keyword_id == -1) {
+            using (var dbinner = new DbManager(Manager.DbCon)) {
+              long tmpkwdid;
+              string sql = "INSERT INTO keywords (keyword) VALUES (@kwd)";
+              dbinner.QueryInsert(out tmpkwdid, sql,
+							                    DB.Param("kwd", lowCaseKey));
+              keyword_id = (int)tmpkwdid;
+            }
+          }
+
+          using (var dbinners = new DbManager(Manager.DbCon)) {
+            long tmpid;
+            string sql = "INSERT INTO keyword_rel (file_id,keyword_id) " +
+                         "VALUES (@fileid,@keyid)";
+            dbinners.QueryInsert(out tmpid, sql,
+                                 DB.Param("fileid", Id),
+                                 DB.Param("keyid", keyword_id));
+          }
+        }
+	    }
+		}
+    
 		/// <summary>
 		/// String casting method
 		/// </summary>
@@ -343,7 +431,17 @@ namespace MediaDB.Backend
 
 			Previews = null;
 		}
-	}
+
+    internal void Update()
+    {
+      /// UPDATE the db entry.
+      /// -> Read new info from file
+      /// -> Re-generate previews
+      /// -> Save() to db, make sure to keep ID
+      ///    and replace previews in db.
+      throw new NotImplementedException();
+    }
+  }
 
 	/// <summary>
 	/// Directory in database
@@ -518,6 +616,13 @@ namespace MediaDB.Backend
 			return false;
 		}
 
+		public static PreviewFile FromSql(MySqlDataReader rd)
+		{
+			var pf = new PreviewFile();
+			pf.SetFromSql(rd);
+			return pf;
+		}
+
 		/// <summary>
 		/// Populate object from database record
 		/// </summary>
@@ -526,7 +631,13 @@ namespace MediaDB.Backend
 		/// </param>
 		public void SetFromSql(MySqlDataReader reader)
 		{
-
+			Id = reader.GetInt64("id");
+			FileId = reader.GetInt64("file_id");
+			Mimetype = reader.GetString("mimetype");
+			Width = reader.GetInt32("width");
+			Height = reader.GetInt32("height");
+			Size = reader.GetInt64("size");
+			Name = reader.GetString("name");
 		}
 
 		/// <summary>

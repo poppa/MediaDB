@@ -17,6 +17,7 @@
  *
  * Author:
  * 	Pontus Östlund <pontus@poppa.se>
+ *  Martin Pedersen
  */
 
 using System;
@@ -80,11 +81,38 @@ namespace MediaDB.Backend
 			MediaFile = null;
 		}
 
+		public void ExternalGeneratePreviews()
+		{
+			if (File.FullName.Length > 0)
+				GeneratePreviews(new Bitmap(File.FullName));
+		}
+
 		/// <summary>
 		/// Process the file. Collects various info about the file.
 		/// Override this in subclasses to extract file specific info.
 		/// </summary>
-		public void Process()
+		public virtual void Process()
+		{
+			if ((MediaFile = Manager.GetMediaFile(File.FullName)) == null) {
+				MediaFile = new MediaFile();
+				MediaFile.Name = File.Name;
+				MediaFile.FullName = File.FullName;
+				MediaFile.Size = File.Length;
+				MediaFile.Created = File.CreationTime;
+				MediaFile.Modified = File.LastWriteTime;
+				MediaFile.Mimetype = MediaType.Mimetype;
+				Directory dir = Manager.GetDirectory(File.Directory.FullName);
+				if (dir != null)
+					MediaFile.DirectoryId = dir.Id;
+			}
+		}
+
+		/// <summary>
+		/// Process the file. Collects various info about the file.
+		/// Override this in subclasses to extract file specific info.
+		/// NS = No Save.
+		/// </summary>
+		public virtual void ProcessNS()
 		{
 			if ((MediaFile = Manager.GetMediaFile(File.FullName)) == null) {
 				MediaFile = new MediaFile();
@@ -116,18 +144,25 @@ namespace MediaDB.Backend
 			eparams.Param[0] = new EncoderParameter(Encoder.Quality,
 			                                        Manager.PreviewQuality);
 			ImageCodecInfo ici = Gfx.GetEncoderInfo(mime);
+			bool gendefault = false;
 
 			if (x > Manager.PreviewMinWidth || y > Manager.PreviewMinHeight) {
 				//Log.Debug("### Generate previews for {0}\n", MediaFile.FullName);
 				foreach (Preview p in Manager.Previews) {
-					if (x < p.Width && y < p.Height)
+					if (x < p.Width && y < p.Height) {
+						if (p.Name == "medium")
+							gendefault = true;
 						continue;
-
+					}
 					PreviewFile pf = lowGenImg(ref img, p, fmt, mime, ici, eparams);
 					MediaFile.Previews.Add(pf);
 				}
 			}
 			else {
+				gendefault = true;
+			}
+
+			if (gendefault) {
 				Preview p = new Preview();
 				p.Width = img.Width;
 				p.Height = img.Height;
@@ -163,32 +198,64 @@ namespace MediaDB.Backend
 		                              ImageCodecInfo ici,
 		                              EncoderParameters eparams)
 		{
-			int[] c = Gfx.GetConstraints(MediaFile.Width, MediaFile.Height,
-			                             p.Width, p.Height);
+			if (p.Name != "square") {
+		    int[] c = Gfx.GetConstraints(MediaFile.Width, MediaFile.Height,
+		                                 p.Width, p.Height);
 
-			using (Bitmap n = Gfx.ScaleImage(img, c[0], c[1])) {
-				if (!orgIsScaled) {
-					img = (Bitmap)n.Clone();
-					orgIsScaled = true;
-				}
+		    using (Bitmap n = Gfx.ScaleImage(img, c[0], c[1])) {
+	        if (!orgIsScaled) {
+            img = (Bitmap)n.Clone();
+            orgIsScaled = true;
+	        }
 
-				using (MemoryStream s = new MemoryStream()) {
-					if (ici != null)
-						n.Save(s, ici, eparams);
-					else
-						n.Save(s, fmt);
+	        using (MemoryStream s = new MemoryStream())
+	        {
+            if (ici != null)
+            	n.Save(s, ici, eparams);
+            else
+            	n.Save(s, fmt);
 
-					PreviewFile pf = new PreviewFile();
-					pf.Width = n.Width;
-					pf.Height = n.Height;
-					pf.Size = s.Length;
-					pf.Mimetype = mime;
-					pf.Name = p.Name;
-					pf.Data = s.ToArray();
+            PreviewFile pf = new PreviewFile();
+            pf.Width = n.Width;
+            pf.Height = n.Height;
+            pf.Size = s.Length;
+            pf.Mimetype = mime;
+            pf.Name = p.Name;
+            pf.Data = s.ToArray();
 
-					s.Close();
-					return pf;
-				}
+            s.Close();
+            return pf;
+	        }
+		    }
+			}
+			else {
+		    int[] c = Gfx.GetConstraintsSq(MediaFile.Width, MediaFile.Height,
+		                                   p.Width, p.Height);
+
+		    using (Bitmap n = Gfx.ScaleImageSq(img, Math.Min(c[0], c[1]))) {
+	        if (!orgIsScaled) {
+            img = (Bitmap)n.Clone();
+            orgIsScaled = true;
+	        }
+
+	        using (MemoryStream s = new MemoryStream()) {
+            if (ici != null)
+              n.Save(s, ici, eparams);
+            else
+              n.Save(s, fmt);
+
+            PreviewFile pf = new PreviewFile();
+            pf.Width = n.Width;
+            pf.Height = n.Height;
+            pf.Size = s.Length;
+            pf.Mimetype = mime;
+            pf.Name = p.Name;
+            pf.Data = s.ToArray();
+
+            s.Close();
+            return pf;
+	        }
+		    }
 			}
 		}
 
@@ -208,6 +275,7 @@ namespace MediaDB.Backend
 				case "image/png":
 				case "image/x-eps":
 				case "image/svg+xml":
+				case "application/illustrator":
 					fmt = ImageFormat.Png;
 					mimetype = "image/png";
 					break;
@@ -229,6 +297,7 @@ namespace MediaDB.Backend
 				if (MediaFile.Sha1Hash == Tools.ComputeFileHash(MediaFile.FullName))
 					return false;
 				*/
+
 				if (MediaFile.Modified <= File.LastWriteTime)
 					return false;
 
@@ -266,13 +335,38 @@ namespace MediaDB.Backend
 		public IMGHandler(FileInfo file, MediaType mediatype)
 			: base(file, mediatype) {}
 
-		/// <summary>
-		/// Collects metadata about the file
-		/// </summary>
-		public new void Process()
-		{
-			base.Process();
+    /// <summary>
+    /// Collects metadeat about the file
+    /// </summary>
+    public override void Process()
+    {
+      base.Process();
+      ProcessFR();
+      try {
+				SaveFile();
+      }
+      catch (Exception e) {
+        Log.Warning("Unable to handle file ({0}): {1}\n{2}\n",
+				            File.FullName, e.Message, e.StackTrace);
+        Log.File("Unable to handle file ({0}): {1}\n{2}\n",
+				         File.FullName, e.Message, e.StackTrace);
+      }
+    }
 
+    /// <summary>
+    /// Collects metadata about the file without saving
+    /// </summary>
+    public override void ProcessNS()
+    {
+      base.ProcessNS();
+      ProcessFR();
+    }
+
+		/// <summary>
+		/// Collects metadata about the file for real.
+		/// </summary>
+		private void ProcessFR()
+		{
 			if (base.ContiueProcessing()) {
 				try {
 					Bitmap bmp = new Bitmap(File.FullName);
@@ -280,18 +374,33 @@ namespace MediaDB.Backend
 					MediaFile.Height = bmp.Height;
 					MediaFile.Resolution = bmp.HorizontalResolution;
 
-					try {
+          List<string> keywordlist = Gfx.iMagickMetadata(File.FullName);
+          string keywords = "";
+          int counter = 0;
+          foreach (string s in keywordlist) {
+            counter++;
+            keywords = keywords + s;
+            if (counter < keywordlist.Count)
+              keywords = keywords + ",";
+          }
+
+          if (keywords.Length > 0)
+            MediaFile.Keywords = keywords;
+
+          try {
 						EXIFextractor exif = new EXIFextractor(ref bmp, "");
 						object o;
-						if ((o = exif["Image Description"]) != null)
-							MediaFile.Description = Tools.IsoEncode(o.ToString());
+            if ((o = exif["Image Description"]) != null) {
+              MediaFile.Description = o.ToString();
+              // string kaka = o.ToString();
+            }
 
 						if ((o = exif["Copyright"]) != null)
-							MediaFile.Copyright = Tools.IsoEncode(o.ToString());
+							MediaFile.Copyright = o.ToString();
 
 						string sexif = exif.ToString().Trim();
 						if (sexif.Length > 0)
-							MediaFile.Exif = Tools.IsoEncode(sexif);
+							MediaFile.Exif = sexif;
 					}
 					catch (Exception e) {
 						Log.Notice("Unable to extract EXIF from {0}: {1}\n",
@@ -303,7 +412,8 @@ namespace MediaDB.Backend
 					bmp.Dispose();
 					bmp = null;
 
-					SaveFile();
+					// Let's remove this in order to let us generate data w/o saving
+					// SaveFile();
 				}
 				catch (Exception e) {
 					Log.Warning("Unable to handle file ({0}): {1}\n{2}\n",
@@ -332,13 +442,30 @@ namespace MediaDB.Backend
 		public EPSHandler(FileInfo file, MediaType mediatype)
 			: base(file, mediatype) {}
 
-		/// <summary>
-		/// Collects metadata about the file
-		/// </summary>
-		public new void Process()
-		{
-			base.Process();
+    /// <summary>
+    /// Collects metadata about the file
+    /// </summary>
+    public override void Process()
+    {
+      base.Process();
+      ProcessFR();
+      SaveFile();
+    }
 
+    /// <summary>
+    /// Collects metata without the save clause
+    /// </summary>
+    public override void ProcessNS()
+    {
+      base.ProcessNS();
+      ProcessFR();
+    }
+
+		/// <summary>
+		/// Collects metadata about the file for real
+		/// </summary>
+		private void ProcessFR()
+		{
 			if (base.ContiueProcessing()) {
 				try {
 					byte[] b = Gfx.Eps2Png(MediaFile.FullName);
@@ -359,8 +486,6 @@ namespace MediaDB.Backend
 				catch (Exception e) {
 					Log.Warning("{0}\n{1}\n", e.Message, e.StackTrace);
 				}
-
-				SaveFile();
 			}
 		}
 	}
@@ -382,13 +507,30 @@ namespace MediaDB.Backend
 		public PDFHandler(FileInfo file, MediaType mediatype)
 			: base(file, mediatype) {}
 
-		/// <summary>
-		/// Collects metadata about the file
-		/// </summary>
-		public new void Process()
-		{
-			base.Process();
+    /// <summary>
+    /// Collects metadata about the file
+    /// </summary>
+    public override void Process()
+    {
+      base.Process();
+      ProcessFR();
+      SaveFile();
+    }
 
+    /// <summary>
+    /// Collects metadata about the file without the save clause
+    /// </summary>
+    public override void ProcessNS()
+    {
+      base.ProcessNS();
+      ProcessFR();
+    }
+
+		/// <summary>
+		/// Collects metadata about the file for real
+		/// </summary>
+		private void ProcessFR()
+		{
 			if (base.ContiueProcessing()) {
 				PdfReader rd = new PdfReader(MediaFile.FullName);
 				if (rd.Info.ContainsKey("Title")) {
@@ -424,8 +566,6 @@ namespace MediaDB.Backend
 
 				rd.Close();
 				rd = null;
-
-				SaveFile();
 			}
 		}
 	}
@@ -447,13 +587,30 @@ namespace MediaDB.Backend
 		public SVGHandler(FileInfo file, MediaType mediatype)
 			: base(file, mediatype) {}
 
-		/// <summary>
-		/// Collects metadata about the file and generates previews
-		/// </summary>
-		public new void Process()
-		{
-			base.Process();
+    /// <summary>
+    /// Collects metadata about the file and generates previews
+    /// </summary>
+    public override void Process()
+    {
+      base.Process();
+      ProcessFR();
+      SaveFile();
+    }
 
+    /// <summary>
+    /// Collects metadata about the file without the save clause
+    /// </summary>
+    public override void ProcessNS()
+    {
+      base.ProcessNS();
+      ProcessFR();
+    }
+
+		/// <summary>
+		/// Collects metadata about the file and generates previews for real
+		/// </summary>
+		private void ProcessFR()
+		{
 			if (base.ContiueProcessing()) {
 				try {
 					XmlDocument xdoc = new XmlDocument();
@@ -507,8 +664,6 @@ namespace MediaDB.Backend
 					Log.Debug("\"{0}\": {1}\n{2}\n",
 					          MediaFile.FullName, e.Message, e.StackTrace);
 				}
-
-				SaveFile();
 			}
 		}
 	}

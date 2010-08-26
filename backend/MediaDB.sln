@@ -1,22 +1,16 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaDB", "MediaDB\MediaDB.csproj", "{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}"
-EndProject
-Project("{9344bdbb-3e7f-41fc-a0dd-8665d75ee146}") = "Packages", "Packages.mdproj", "{D4342092-2928-4474-BC07-DCFDDBA8E20E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
-		Release|x86 = Release|x86
 		DebugLinux|x86 = DebugLinux|x86
+		Release|x86 = Release|x86
 		ReleaseLinux|x86 = ReleaseLinux|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.DebugLinux|x86.ActiveCfg = DebugLinux|x86
-		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.Release|x86.ActiveCfg = Release|Any CPU
-		{D4342092-2928-4474-BC07-DCFDDBA8E20E}.ReleaseLinux|x86.ActiveCfg = ReleaseLinux|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.Debug|x86.ActiveCfg = Debug|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.Debug|x86.Build.0 = Debug|x86
 		{FEC9CE5A-65CA-42B8-A0C4-ECE3FBB166B7}.DebugLinux|x86.ActiveCfg = DebugLinux|x86
@@ -59,5 +53,8 @@ Global
 		$0.StandardHeader = $8
 		$8.Text = @/* $filename\r\n *\r\n * Copyright (C) 2010  $username\r\n *\r\n * This library is free software: you can redistribute it and/or modify\r\n * it under the terms of the GNU Lesser General Public License as published by\r\n * the Free Software Foundation, either version 3 of the License, or\r\n * (at your option) any later version.\r\n *\r\n * This library is distributed in the hope that it will be useful,\r\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\r\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\r\n * GNU Lesser General Public License for more details.\r\n *\r\n * You should have received a copy of the GNU Lesser General Public License\r\n * along with this library.  If not, see <http://www.gnu.org/licenses/>.\r\n *\r\n * Author:\r\n * \t$username <$email>\r\n */
 		$8.inheritsSet = MITX11License
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

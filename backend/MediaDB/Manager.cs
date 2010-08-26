@@ -17,15 +17,16 @@
  *
  * Author:
  * 	Pontus Östlund <pontus@poppa.se>
+ *  Martin Pedersen
  */
 using System;
-using System.Security;
-using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using System.Data;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using MySql.Data.MySqlClient;
 using MediaDB.Backend;
@@ -281,6 +282,8 @@ namespace MediaDB
 #if DEBUG
 				DB.Query("TRUNCATE `file`");
 				DB.Query("TRUNCATE `preview`");
+        DB.Query("TRUNCATE `keyword`");
+        DB.Query("TRUNCATE `keyword_rel`");
 #endif
 				Log.Debug("OK!\n");
 			}
@@ -290,25 +293,25 @@ namespace MediaDB
 				return false;
 			}
 
-			MySqlDataReader mrd;
+			var db = new DbManager();
 
 			// Collect base paths from database
-			if (DB.QueryReader(out mrd, "SELECT * FROM base_path")) {
-				while (mrd.Read()) {
-					string p = mrd.GetString("path");
-					long id = mrd.GetInt64("id");
+			if (db.QueryReader("SELECT * FROM base_path")) {
+				while (db.DataReader.Read()) {
+					string p = db.DataReader.GetString("path");
+					long id = db.DataReader.GetInt64("id");
 
-					if (!basePaths.Contains(p) || !Tools.DirectoryExists(p)) {
+					if (!(basePaths.Contains(p) && Tools.DirectoryExists(p))) {
 						Log.Notice("Base path \"{0}\" is removed from config or file " +
 						           "system! Removing from database...\n", p);
+						// NOTE! This uses the global DB object. It's not supposed to
+						// use the local one since it would conflict with the DataReader.
 						DB.Query("DELETE FROM base_path WHERE path = @path",
 						         DB.Param("path", p));
 					}
 					else
 						BasePaths.Add(new BasePath(id, p));
 				}
-
-				DB.EndReader(ref mrd);
 			}
 
 			// Sync paths from config file with path from database
@@ -325,6 +328,8 @@ namespace MediaDB
 						Log.Debug("+++ Add {0} to base paths\n", path);
 						long myid;
 						string sql = "INSERT INTO base_path(path) VALUES (@path)";
+						// NOTE! This uses the global DB object. It's not supposed to
+						// use the local one since it would conflict with the DataReader.
 						if (DB.QueryInsert(out myid, sql, DB.Param("path", path)))
 							BasePaths.Add(new BasePath(myid, path));
 						else
@@ -334,27 +339,40 @@ namespace MediaDB
 			}
 
 			// Setup the directory list
-			if (DB.QueryReader(out mrd, "SELECT * FROM directory")) {
-				while (mrd.Read()) {
-					MediaDB.Backend.Directory d = MediaDB.Backend.Directory.FromSql(mrd);
-					Directories.Add(d);
+			if (db.QueryReader("SELECT * FROM directory")) {
+				while (db.DataReader.Read()) {
+					MediaDB.Backend.Directory d = 
+						MediaDB.Backend.Directory.FromSql(db.DataReader);
+          if (Tools.DirectoryExists(d.FullName) && InBasePaths(d.FullName)) {
+						Directories.Add(d);
+          }
+          else {
+						DB.Query("DELETE FROM directory WHERE id='" + d.Id + "'");
+          }
 				}
-
-				DB.EndReader(ref mrd);
 			}
 
 			// Setup the list of files
-			if (DB.QueryReader(out mrd, "SELECT fullname FROM `file`")) {
-				while (mrd.Read())
-					FileIndex.Add(mrd.GetString("fullname"));
-
-				DB.EndReader(ref mrd);
+			if (db.QueryReader("SELECT fullname FROM `file`")) {
+				while (db.DataReader.Read())
+					FileIndex.Add(db.DataReader.GetString("fullname"));
 			}
 
 			filesCount = FileIndex.Count;
 
+			db.Dispose();
+
 			return true;
 		}
+
+    public static bool InBasePaths(string path)
+    {
+			foreach (BasePath bp in BasePaths)
+				if (path.StartsWith(bp.Name))
+					return true;
+
+			return false;
+    }
 
 		/// <summary>
 		/// Returns the directory object for <paramref name="path"/> if
@@ -402,35 +420,152 @@ namespace MediaDB
 			}
 
 			MediaFile mf = null;
+			//! TODO: I'm note sure what performance gain this lookup has. One thing
+			//! is certain though: It's a pain keeping it in sync...
 			if (FileIndex.Contains(fullname)) {
 				// This method is called from an async method in Indexer.cs.
 				// So lock during the DB call and release when db done.
 				mutex.WaitOne();
 
-				MySqlDataReader r = null;
-				try {
-					string sql = "SELECT * FROM `file` WHERE fullname = @fn";
-					if (DB.QueryReader(out r, sql, DB.Param("fn", fullname))) {
-						if (r.HasRows) {
-							r.Read();
-							mf = new MediaFile();
-							mf.SetFromSql(r);
-							//Log.Debug("   @@@ Found file {0} in database!\n", fullname);
+				using (var db = new DbManager()) {
+					try {
+						string sql = "SELECT * FROM `file` WHERE fullname = @fn";
+						// Log.Debug("@@@ GetMEdiaFile({0})\n", sql.Replace("@fn", fullname));
+						if (db.QueryReader(sql, DB.Param("fn", fullname))) {
+							if (db.DataReader.HasRows) {
+								db.DataReader.Read();
+								mf = MediaFile.FromSql(db.DataReader);
+							}
 						}
-
-						DB.EndReader(ref r);
 					}
-				}
-				catch (Exception e) {
-					Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
-					DB.EndReader(ref r);
+					catch (Exception e) {
+						Log.Warning("DB error: {0} {1}\n", e.Message, e.StackTrace);
+					}
 				}
 
 				// Release the thread
 				mutex.ReleaseMutex();
 			}
-
 			return mf;
+		}
+
+		/// <summary>
+		/// Get a <see cref="FileHandler"/> object for <paramref name="file"/> of
+		/// mediatype <paramref name="type"/>.
+		/// </summary>
+		/// <param name="file">
+		/// A <see cref="FileInfo"/>
+		/// </param>
+		/// <param name="type">
+		/// A <see cref="MediaType"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="FileHandler"/>
+		/// </returns>
+		public static FileHandler GetFileHandler(FileInfo file, MediaType type)
+		{
+			switch (type.Mimetype)
+			{
+				case "image/bmp":
+				case "image/gif":
+				case "image/png":
+				case "image/jpeg":
+				case "image/tiff":
+					return new IMGHandler(file, type);
+
+				case "image/x-eps":
+				case "application/illustrator":
+					return new EPSHandler(file, type);
+
+				case "application/pdf":
+					return new PDFHandler(file, type);
+
+				case "image/svg+xml":
+					return new SVGHandler(file, type);
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Add file with path <paramref name="path"/> to the database
+		/// </summary>
+		/// <param name="path">
+		/// A <see cref="System.String"/>
+		/// </param>
+		public static void AddFile(string path)
+		{
+			AddFile(new FileInfo(path));
+		}
+
+		/// <summary>
+		/// Add file of <paramref name="path"/> to the database.
+		/// </summary>
+		/// <param name="path">
+		/// A <see cref="FileInfo"/>
+		/// </param>
+		public static void AddFile(FileInfo path)
+		{
+			if (!path.Exists) {
+				Log.Debug("Can't add non-exisiting file \"{0}\"",path.FullName);
+				return;
+			}
+
+			var mt = GetMediaType(path);
+			if (mt == null) {
+				Log.Debug("Unhandled file: {0}\n", path.FullName);
+				return;
+			}
+
+			var fh = GetFileHandler(path, mt);
+			if (fh != null) {
+				try {
+					Log.Debug("+++ Adding {0} to database\n", path.FullName);
+					fh.Process();
+				}
+				catch (Exception e) {
+					Log.Debug("Unable to process file {0} in Manager.AddFile: {1}\n",
+					          path.FullName, e.Message);
+				}
+
+				fh.Dispose();
+				fh = null;
+				AddToFileIndex(path.FullName);
+			}
+		}
+
+		/// <summary>
+		/// Deletefile from database.
+		/// </summary>
+		/// <param name="path">
+		/// A string
+		/// </param>
+		public static void DeleteFile(string path)
+		{
+	    MediaFile mf = GetMediaFile(path);
+	    if (mf != null) {
+        try {
+          Log.Debug("--- Deleting {0} from database\n", path);
+          mf.DeleteFromDB();
+          mf.Dispose();
+        }
+        catch (Exception e) {
+          Log.Debug("--- ERROR: Could not delete {0} from database. " +
+					          "Sorry mate : {1}\n", path, e.Message);
+        }
+	    }
+		}
+        
+		/// <summary>
+		/// Add <paramref name="path"/> to the <see cref="FileIndex">file index</see>
+		/// </summary>
+		/// <param name="path"></param>
+		public static void AddToFileIndex(string path)
+		{
+			if (!FileIndex.Contains(path)) {
+				FileIndex.Add(path);
+				filesCount = FileIndex.Count;
+			}
 		}
 
 		/// <summary>
@@ -475,79 +610,6 @@ namespace MediaDB
 		/// The database user's password
 		/// </summary>
 		public string Password;
-	}
-
-	/// <summary>
-	/// Base path
-	/// </summary>
-	public class BasePath
-	{
-		/// <summary>
-		/// MySql ID
-		/// </summary>
-		public long Id;
-
-		/// <summary>
-		/// Path name
-		/// </summary>
-		public string Name;
-
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		public BasePath() {}
-
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="id">
-		/// A <see cref="System.Int64"/>
-		/// </param>
-		/// <param name="name">
-		/// A <see cref="System.String"/>
-		/// </param>
-		public BasePath(long id, string name)
-		{
-			Id = id;
-			Name = name;
-
-			initWatcher();
-		}
-
-		// File system watcher object
-		private FileSystemWatcher fsw;
-
-		// Initialize the file system watcher
-		private void initWatcher()
-		{
-			fsw = new FileSystemWatcher();
-			fsw.Path = Name;
-			fsw.IncludeSubdirectories = true;
-			fsw.NotifyFilter = NotifyFilters.LastWrite
-											 | NotifyFilters.CreationTime
-											 | NotifyFilters.FileName
-											 | NotifyFilters.DirectoryName;
-
-			fsw.Filter = "*.*"; 
-			fsw.Changed += new FileSystemEventHandler(onChanged);
-			fsw.Created += new FileSystemEventHandler(onChanged);
-			fsw.Deleted += new FileSystemEventHandler(onChanged);
-			fsw.Renamed += new RenamedEventHandler(onRenamed);
-
-			fsw.EnableRaisingEvents = true;
-		}
-
-		// Callback for Changed, Created and Deleted
-		private void onChanged(object source, FileSystemEventArgs args)
-		{
-			Log.Debug("onChanged({0}, {1})\n", args.FullPath, args.ChangeType);
-		}
-
-		// Callback for Renamed
-		private void onRenamed(object source, RenamedEventArgs args)
-		{
-			Log.Debug("onRenamed({0} >> {1})\n", args.OldFullPath, args.FullPath);
-		}
 	}
 
 	/// <summary>

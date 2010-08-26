@@ -1,6 +1,6 @@
 #!/usr/bin/env pike
 
-string constr = "mysql://webuser:ResubeW@localhost/mediadb";
+string constr = "mysql://webuser:ResubeW@snoop/mediadb";
 Sql.Sql db = Sql.Sql(constr);
 mapping base_paths = ([]);
 

@@ -392,7 +392,7 @@ namespace Goheer
 				//
 				data = "";
 				//
-				Encoding ascii = Encoding.ASCII;
+                Encoding enc = Encoding.GetEncoding("ISO-8859-15");
 				//
 				foreach( System.Drawing.Imaging.PropertyItem p in parr )
 				{
@@ -400,7 +400,7 @@ namespace Goheer
 					string name = (string)myHash[p.Id];
 					// tag not found. skip it
 					if( name == null ) continue;
-					//
+
 					data += name+": ";
 					//
 					//1 = BYTE An 8-bit unsigned integer.,
@@ -412,7 +412,7 @@ namespace Goheer
 					else if( p.Type == 0x2 )
 					{
 						// string					
-						v = ascii.GetString(p.Value);
+						v = enc.GetString(p.Value);
 					}
 						//3 = SHORT A 16-bit (2 -byte) unsigned integer,
 					else if( p.Type == 0x3 )

@@ -17,6 +17,7 @@
  *
  * Author:
  * 	Pontus Östlund <pontus@poppa.se>
+ *  Martin Pedersen
  */
 
 using System;
@@ -166,6 +167,28 @@ namespace MediaDB
 		}
 
 		/// <summary>
+		/// UTF8 encode string <paramref name="s"/>
+		/// </summary>
+		/// <param name="s">
+		/// A <see cref="System.String"/>
+		/// </param>
+		/// <returns>
+		/// A <see cref="System.String"/>
+		/// </returns>
+		public static string UTF8Encode(string s)
+		{
+			try {
+				Encoding enc = Encoding.GetEncoding(0);
+				return enc.GetString(Encoding.ASCII.GetBytes(s));
+			}
+			catch (Exception e) {
+				Log.Debug("UTF8 conversion failed: {0}\n", e.Message);
+			}
+
+			return s;
+		}
+
+		/// <summary>
 		/// String representation of <paramref name="bytes"/>
 		/// </summary>
 		/// <param name="bytes">
@@ -180,10 +203,9 @@ namespace MediaDB
 		  string[] orders = { "GB", "MB", "KB", "Bytes" };
 		  long max = (long)Math.Pow(scale, orders.Length - 1);
 
-		  foreach (string order in orders)
-		  {
+		  foreach (string order in orders) {
 		    if (bytes > max) {
-		      return string.Format("{0:##.##} {1}", decimal.Divide( bytes, max),
+		      return string.Format("{0:##.##} {1}", decimal.Divide(bytes, max),
 					                     order);
 				}
 		

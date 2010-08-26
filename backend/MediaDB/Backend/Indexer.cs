@@ -27,9 +27,7 @@ using System.Threading;
 using System.Diagnostics;
 using MediaDB.Backend;
 
-/// <summary>
-/// Async method template for processing a file
-/// </summary>
+// Async method template for processing a file
 delegate MediaDB.Backend.MediaFile
          FileProcessor(MediaDB.Backend.CrawlerFile cf);
 
@@ -62,12 +60,23 @@ namespace MediaDB.Backend
 		/// </param>
 		public static void Scan(List<BasePath> paths)
 		{
-			DateTime now = DateTime.Now;
+			Scan(paths, true);
+		}
 
+		/// <summary>
+		/// Starts a scanning/indexing session in <paramref name="paths"/>
+		/// </summary>
+		/// <param name="paths">
+		/// </param>
+		/// <param name="recurse">
+		/// </param>
+		public static void Scan(List<BasePath> paths, bool recurse)
+		{
+			DateTime now = DateTime.Now;
 
 			Console.Write("\n::: Starting scanner pass: {0}\n", now);
 
-			Scanner scanner = new Scanner(paths);
+			Scanner scanner = new Scanner(paths, recurse);
 			Console.Write("::: Collected {0} files,", scanner.TotalFiles);
 			Console.Write(" starting indexer...\n\n");
 			scanner.Run();
@@ -87,8 +96,24 @@ namespace MediaDB.Backend
 		/// </param>
 		public Scanner(List<BasePath> paths)
 		{
+			init(paths, true);
+		}
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="paths"></param>
+		/// <param name="recurse"></param>
+		public Scanner(List<BasePath> paths, bool recurse)
+		{
+			init(paths, recurse);
+		}
+
+		//! Init this object
+		private void init(List<BasePath> paths, bool recurse)
+		{
 			foreach (BasePath p in paths) {
-				var idx = new Indexer(p, this);
+				var idx = new Indexer(p, this, recurse);
 				indexers.Add(idx);
 				TotalFiles += idx.Files.Count;
 			}
@@ -173,6 +198,15 @@ namespace MediaDB.Backend
 		/// </summary>
 		private Scanner scanner;
 
+		private bool recurse = true;
+
+		public Indexer(BasePath path, Scanner scanner, bool recurse)
+		{
+			Log.Debug("Indexer with recursion: {0}\n", recurse);
+			this.recurse = recurse;
+			init(path, scanner);
+		}
+
 		/// <summary>
 		/// Contructor
 		/// </summary>
@@ -181,6 +215,11 @@ namespace MediaDB.Backend
 		/// </param>
 		/// <param name="scanner"></param>
 		public Indexer(BasePath path, Scanner scanner)
+		{
+			init(path, scanner);
+		}
+
+		private void init(BasePath path, Scanner scanner)
 		{
 			this.scanner = scanner;
 			Path = path;
@@ -285,25 +324,27 @@ namespace MediaDB.Backend
 				case "image/gif":
 				case "image/png":
 					h = new IMGHandler(cf.File, cf.MediaType);
-					((IMGHandler)h).Process();
 					break;
 
 				case "image/x-eps":
+				case "application/illustrator":
 					h =  new EPSHandler(cf.File, cf.MediaType);
-					((EPSHandler)h).Process();
 					break;
 
 				case "image/svg+xml":
 					h =  new SVGHandler(cf.File, cf.MediaType);
-					((SVGHandler)h).Process();
 					break;
 
 				case "application/pdf":
 					h =  new PDFHandler(cf.File, cf.MediaType);
-					((PDFHandler)h).Process();
 					break;
+
+				default:
+					Log.Debug("Unhandled file detected: {0}\n", cf.File.FullName);
+					return null;
 			}
 
+			h.Process();
 			cf = null;
 			MediaFile m = h.MediaFile;
 			h.Dispose();
@@ -371,34 +412,36 @@ namespace MediaDB.Backend
 				Log.Werror("File error: {0}\n", e.Message);
 			}
 
-			try {
-				foreach (DirectoryInfo sub in dir.GetDirectories()) {
-					string shortName = getDirectoryShortName(sub.FullName);
-					Directory d = Manager.GetDirectory(sub.FullName);
-					if (d == null) {
-						d = new Directory();
-						d.FullName = sub.FullName;
-						d.Name = sub.Name;
-						d.ShortName = shortName;
-						d.BasePathId = Path.Id;
-
-						Directory parent = findParentDirectory(sub);
-						if (parent != null)
-							d.ParentId = parent.Id;
-
-						if (d.Save())
-							Manager.Directories.Add(d);
-						else 
-							Log.Warning("Failed saving Directory\n", d.Id);
+			if (recurse) {
+				try {
+					foreach (DirectoryInfo sub in dir.GetDirectories()) {
+						string shortName = getDirectoryShortName(sub.FullName);
+						Directory d = Manager.GetDirectory(sub.FullName);
+						if (d == null) {
+							d = new Directory();
+							d.FullName = sub.FullName;
+							d.Name = sub.Name;
+							d.ShortName = shortName;
+							d.BasePathId = Path.Id;
+	
+							Directory parent = findParentDirectory(sub);
+							if (parent != null)
+								d.ParentId = parent.Id;
+	
+							if (d.Save())
+								Manager.Directories.Add(d);
+							else 
+								Log.Warning("Failed saving Directory\n", d.Id);
+						}
+	
+						Directories.Add(d);
+	
+						crawl(sub.FullName);
 					}
-
-					Directories.Add(d);
-
-					crawl(sub.FullName);
 				}
-			}
-			catch (Exception e) {
-				Log.Werror("Directory error: {0}\n", e.Message);
+				catch (Exception e) {
+					Log.Werror("Directory error: {0}\n", e.Message);
+				}
 			}
 		}
 	}
